@@ -216,15 +216,11 @@ class ExpectDaySumToBeCloseToEquivalentWeekDayMean(QueryExpectation):
 def get_results_dict(metrics: dict) -> dict:
     metrics = convert_to_json_serializable(data=metrics)
     result_list = metrics.get("query.template_values")
-    result_dict = {}
-    result_dict.update(
-        {i["date_column"]: i["column_sum_over_date"] for i in result_list}
-    )
-    return result_dict
+    return dict({i["date_column"]: i["column_sum_over_date"] for i in result_list})
 
 
 def average_if_nonempty(list_: list):
-    return sum(list_) / len(list_) if len(list_) > 0 else 0
+    return sum(list_) / len(list_) if list_ else 0
 
 
 def get_diff_fraction(yesterday_sum: int, result_dict: dict):

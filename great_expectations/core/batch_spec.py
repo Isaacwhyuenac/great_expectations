@@ -49,12 +49,13 @@ class PandasBatchSpec(SerializableDotDict, BatchSpec, metaclass=ABCMeta):
             _EXCLUDE_TYPES_FROM_JSON,
         )
 
-        json_dict: dict[str, JSONValues] = dict()
-        json_dict["reader_method"] = self.reader_method
-        json_dict["reader_options"] = {
-            reader_option_name: reader_option
-            for reader_option_name, reader_option in self.reader_options.items()
-            if not isinstance(reader_option, tuple(_EXCLUDE_TYPES_FROM_JSON))
+        json_dict: dict[str, JSONValues] = {
+            "reader_method": self.reader_method,
+            "reader_options": {
+                reader_option_name: reader_option
+                for reader_option_name, reader_option in self.reader_options.items()
+                if not isinstance(reader_option, tuple(_EXCLUDE_TYPES_FROM_JSON))
+            },
         }
         return json_dict
 

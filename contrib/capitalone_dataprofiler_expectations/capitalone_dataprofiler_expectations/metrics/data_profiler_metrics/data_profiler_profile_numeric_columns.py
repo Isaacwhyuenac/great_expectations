@@ -29,7 +29,7 @@ class DataProfilerProfileNumericColumns(DataProfilerProfileMetricProvider):
         numeric_columns = []
         for col in profile_report["data_stats"]:
             dtype = col["data_type"]
-            if dtype == "int" or dtype == "float":
+            if dtype in ["int", "float"]:
                 numeric_columns.append(col["column_name"])
 
         return numeric_columns

@@ -18,8 +18,7 @@ from great_expectations.expectations.metrics import (
 
 def is_valid_doge_address(addr: str) -> bool:
     try:
-        res = coinaddrvalidator.validate("doge", addr).valid
-        return res
+        return coinaddrvalidator.validate("doge", addr).valid
     except Exception:
         return False
 

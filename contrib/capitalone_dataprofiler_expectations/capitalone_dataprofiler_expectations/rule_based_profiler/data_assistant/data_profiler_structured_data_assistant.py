@@ -191,15 +191,13 @@ class DataProfilerStructuredDataAssistant(DataAssistant):
             expect_column_stddev_to_be_between_expectation_configuration_builder,
         ]
 
-        rule = Rule(
+        return Rule(
             name="numeric_rule",
             variables=variables,
             domain_builder=data_profiler_column_domain_builder,
             parameter_builders=parameter_builders,
             expectation_configuration_builders=expectation_configuration_builders,
         )
-
-        return rule
 
     @staticmethod
     def _build_float_rule() -> Rule:
@@ -304,12 +302,10 @@ class DataProfilerStructuredDataAssistant(DataAssistant):
             expect_column_stddev_to_be_between_expectation_configuration_builder,
         ]
 
-        rule = Rule(
+        return Rule(
             name="float_rule",
             variables=variables,
             domain_builder=data_profiler_column_domain_builder,
             parameter_builders=parameter_builders,
             expectation_configuration_builders=expectation_configuration_builders,
         )
-
-        return rule

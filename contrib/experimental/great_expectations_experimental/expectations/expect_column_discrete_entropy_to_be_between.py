@@ -115,8 +115,8 @@ class ColumnDiscreteEntropy(ColumnAggregateMetricProvider):
             }
         )
 
-        if isinstance(execution_engine, SqlAlchemyExecutionEngine) or isinstance(
-            execution_engine, SparkDFExecutionEngine
+        if isinstance(
+            execution_engine, (SqlAlchemyExecutionEngine, SparkDFExecutionEngine)
         ):
             dependencies["column_values.nonnull.count"] = MetricConfiguration(
                 "column_values.nonnull.count", metric.metric_domain_kwargs
@@ -300,7 +300,7 @@ class ExpectColumnDiscreteEntropyToBeBetween(ColumnAggregateExpectation):
     ):
         runtime_configuration = runtime_configuration or {}
         include_column_name = (
-            False if runtime_configuration.get("include_column_name") is False else True
+            runtime_configuration.get("include_column_name") is not False
         )
         styling = runtime_configuration.get("styling")
         params = substitute_none_for_missing(
@@ -324,18 +324,18 @@ class ExpectColumnDiscreteEntropyToBeBetween(ColumnAggregateExpectation):
                 template_str = f"discrete entropy must be {at_least_str} $min_value and {at_most_str} $max_value."
             elif params["min_value"] is None:
                 template_str = f"discrete entropy must be {at_most_str} $max_value."
-            elif params["max_value"] is None:
+            else:
                 template_str = f"discrete entropy must be {at_least_str} $min_value."
 
         if include_column_name:
-            template_str = "$column " + template_str
+            template_str = f"$column {template_str}"
 
         if params["row_condition"] is not None:
             (
                 conditional_template_str,
                 conditional_params,
             ) = parse_row_condition_string_pandas_engine(params["row_condition"])
-            template_str = conditional_template_str + ", then " + template_str
+            template_str = f"{conditional_template_str}, then {template_str}"
             params.update(conditional_params)
 
         return [

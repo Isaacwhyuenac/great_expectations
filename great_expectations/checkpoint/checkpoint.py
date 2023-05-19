@@ -270,7 +270,7 @@ class BaseCheckpoint(ConfigPeer):
 
         run_id = run_id or RunIdentifier(run_name=run_name, run_time=run_time)
 
-        if len(validations) == 0 and not (batch_request or self._validator):
+        if len(validations) == 0 and not batch_request and not self._validator:
             raise gx_exceptions.CheckpointError(
                 f'Checkpoint "{self.name}" must be called with a validator or contain either a batch_request or validations.'
             )
@@ -286,8 +286,8 @@ class BaseCheckpoint(ConfigPeer):
         # AsyncExecutor and the corresponding AsyncExecutor docstring for more details on when multiple threads are
         # used.
         with AsyncExecutor(
-            self.data_context.concurrency, max_workers=len(validations)
-        ) as async_executor:
+                self.data_context.concurrency, max_workers=len(validations)
+            ) as async_executor:
             # noinspection PyUnresolvedReferences
             async_validation_operator_results: List[
                 AsyncResult[ValidationOperatorResult]
@@ -323,14 +323,10 @@ class BaseCheckpoint(ConfigPeer):
                 meta: ExpectationSuiteValidationResultMeta
                 validation_result_url: str | None = None
                 for run_result in run_results.values():
-                    validation_result = run_result.get("validation_result")  # type: ignore[assignment] # could be dict
-                    if validation_result:
+                    if validation_result := run_result.get("validation_result"):
                         meta = validation_result.meta  # type: ignore[assignment] # could be dict
                         id = self.ge_cloud_id
                         meta["checkpoint_id"] = id
-                    # TODO: We only currently support 1 validation_result_url per checkpoint and use the first one we
-                    #       encounter. Since checkpoints can have more than 1 validation result, we will need to update
-                    #       this and the consumers.
                     if not validation_result_url:
                         if (
                             "actions_results" in run_result
@@ -343,7 +339,7 @@ class BaseCheckpoint(ConfigPeer):
                                 "store_validation_result"
                             ]["validation_result_url"]
 
-                checkpoint_run_results.update(run_results)
+                checkpoint_run_results |= run_results
 
         return CheckpointResult(
             validation_result_url=validation_result_url,
@@ -361,8 +357,7 @@ class BaseCheckpoint(ConfigPeer):
 
         config_kwargs: dict = self.get_config(mode=ConfigOutputModes.JSON_DICT)  # type: ignore[assignment] # always returns a dict
 
-        template_name: Optional[str] = runtime_kwargs.get("template_name")
-        if template_name:
+        if template_name := runtime_kwargs.get("template_name"):
             config_kwargs["template_name"] = template_name
 
         substituted_runtime_config: dict = self._get_substituted_template(
@@ -380,8 +375,7 @@ class BaseCheckpoint(ConfigPeer):
     ) -> dict:
         substituted_config: dict
 
-        template_name = source_config.get("template_name")
-        if template_name:
+        if template_name := source_config.get("template_name"):
             checkpoint: Checkpoint = self.data_context.get_checkpoint(
                 name=template_name
             )
@@ -896,9 +890,7 @@ constructor arguments.
             key: value
             for key, value in checkpoint_config_from_store.items()
             if key in checkpoint_config_from_call_args
-        }
-        checkpoint_config.update(checkpoint_config_from_call_args)
-
+        } | checkpoint_config_from_call_args
         checkpoint_run_arguments: dict = dict(**checkpoint_config, **kwargs)
         filter_properties_dict(
             properties=checkpoint_run_arguments,
@@ -985,23 +977,19 @@ constructor arguments.
             module_name=module_name or detault_checkpoints_module_name,
         )
         if issubclass(klass, SimpleCheckpoint):
-            checkpoint_config.update(
-                {
-                    # the following four keys are used by SimpleCheckpoint
-                    "site_names": site_names,
-                    "slack_webhook": slack_webhook,
-                    "notify_on": notify_on,
-                    "notify_with": notify_with,
-                }
-            )
+            checkpoint_config |= {
+                # the following four keys are used by SimpleCheckpoint
+                "site_names": site_names,
+                "slack_webhook": slack_webhook,
+                "notify_on": notify_on,
+                "notify_with": notify_with,
+            }
         elif klass == LegacyCheckpoint:
-            checkpoint_config.update(
-                {
-                    # Next two fields are for LegacyCheckpoint configuration
-                    "validation_operator_name": validation_operator_name,
-                    "batches": batches,
-                }
-            )
+            checkpoint_config |= {
+                # Next two fields are for LegacyCheckpoint configuration
+                "validation_operator_name": validation_operator_name,
+                "batches": batches,
+            }
         elif issubclass(klass, LegacyCheckpoint):
             raise gx_exceptions.InvalidCheckpointConfigError(
                 'Extending "LegacyCheckpoint" is not allowed, because "LegacyCheckpoint" is deprecated.'
@@ -1293,7 +1281,7 @@ class LegacyCheckpoint(Checkpoint):
                 self.validation_operator_name
             )
         ):
-            results = self.data_context.run_validation_operator(
+            return self.data_context.run_validation_operator(
                 self.validation_operator_name,
                 assets_to_validate=batches_to_validate,
                 run_id=run_id,
@@ -1303,23 +1291,20 @@ class LegacyCheckpoint(Checkpoint):
                 result_format=result_format,
                 **kwargs,
             )
-        else:
-            if self.validation_operator_name:
-                logger.warning(
-                    f'Could not find Validation Operator "{self.validation_operator_name}" when '
-                    f'running Checkpoint "{self.name}". Using default action_list_operator.'
-                )
-
-            results = self._run_default_validation_operator(
-                assets_to_validate=batches_to_validate,
-                run_id=run_id,
-                evaluation_parameters=evaluation_parameters,
-                run_name=run_name,
-                run_time=run_time,
-                result_format=result_format,
+        if self.validation_operator_name:
+            logger.warning(
+                f'Could not find Validation Operator "{self.validation_operator_name}" when '
+                f'running Checkpoint "{self.name}". Using default action_list_operator.'
             )
 
-        return results
+        return self._run_default_validation_operator(
+            assets_to_validate=batches_to_validate,
+            run_id=run_id,
+            evaluation_parameters=evaluation_parameters,
+            run_name=run_name,
+            run_time=run_time,
+            result_format=result_format,
+        )
 
     def _get_batches_to_validate(self, batches):
         batches_to_validate = []

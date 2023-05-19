@@ -226,12 +226,8 @@ class GXDependencies:
 
         pattern = "requirements*.txt"
 
-        req_dict = {}
         req_files = list(project_root.glob(pattern)) + list(reqs_dir.glob(pattern))
-        for req_file in req_files:
-            req_dict[req_file.name] = req_file
-
-        return req_dict
+        return {req_file.name: req_file for req_file in req_files}
 
     def get_required_dependency_names(self) -> List[str]:
         """Sorted list of required GX dependencies"""
@@ -305,10 +301,9 @@ class GXDependencies:
         dependency_matches = [
             re.search(r"^(?!--requirement)([\w\-.]+)", s) for s in dependencies
         ]
-        dependency_names: List[str] = []
-        for match in dependency_matches:
-            if match is not None:
-                dependency_names.append(match.group(0))
+        dependency_names: List[str] = [
+            match.group(0) for match in dependency_matches if match is not None
+        ]
         return dependency_names
 
 

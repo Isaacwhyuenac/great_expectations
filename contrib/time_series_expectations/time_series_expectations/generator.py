@@ -33,11 +33,9 @@ def generate_annual_seasonality(
     """Generate an annual seasonality component for a time series."""
 
     return sum(
-        [
-            alpha * np.cos(2 * np.pi * (i + 1) * time / 365)
-            + beta * np.sin(2 * np.pi * (i + 1) * time / 365)
-            for i, (alpha, beta) in enumerate(annual_seasonality_params)
-        ]
+        alpha * np.cos(2 * np.pi * (i + 1) * time / 365)
+        + beta * np.sin(2 * np.pi * (i + 1) * time / 365)
+        for i, (alpha, beta) in enumerate(annual_seasonality_params)
     )
 
 
@@ -118,7 +116,7 @@ def generate_daily_time_series(
         ]
 
     if weekday_dummy_params is None:
-        weekday_dummy_params = [np.random.normal() for i in range(7)]
+        weekday_dummy_params = [np.random.normal() for _ in range(7)]
 
     if annual_seasonality_params is None:
         annual_seasonality_params = [
@@ -126,7 +124,7 @@ def generate_daily_time_series(
                 np.random.normal(),
                 np.random.normal(),
             )
-            for i in range(10)
+            for _ in range(10)
         ]
 
     time_series_components = generate_component_time_series(
@@ -139,7 +137,7 @@ def generate_daily_time_series(
         noise_scale,
     )
 
-    Y = (
+    return (
         time_series_components["trend"]
         + time_series_components["weekly_seasonality"]
         + time_series_components["annual_seasonality"]
@@ -147,8 +145,6 @@ def generate_daily_time_series(
         + time_series_components["outliers"]
         + time_series_components["noise"]
     )
-
-    return Y
 
 
 def generate_daily_time_series_df(

@@ -72,12 +72,14 @@ class DataProfilerProfileNumericColumnsDiffGreaterThanThreshold(
                 requested_columns[col] = "Column requested was not found."
                 continue
 
-            col_data_stats = {}
-            for data_stat in data_stats:
-                if data_stat["column_name"] == col:
-                    col_data_stats = data_stat["statistics"]
-                    break
-
+            col_data_stats = next(
+                (
+                    data_stat["statistics"]
+                    for data_stat in data_stats
+                    if data_stat["column_name"] == col
+                ),
+                {},
+            )
             requested_columns[col] = {}
             for stat, threshold in stats.items():
                 if stat not in col_data_stats:
@@ -86,15 +88,16 @@ class DataProfilerProfileNumericColumnsDiffGreaterThanThreshold(
                 diff_val = col_data_stats[stat]
                 if diff_val == "unchanged":  # In the case there is no delta
                     diff_val = 0
-                is_greater = is_value_greater_than_threshold(diff_val, threshold)
-                if not is_greater:
+                if is_greater := is_value_greater_than_threshold(
+                    diff_val, threshold
+                ):
+                    requested_columns[col][stat] = True
+
+                else:
                     requested_columns[col][stat] = {
                         "threshold": threshold,
                         "value_found": diff_val,
                     }
-                else:
-                    requested_columns[col][stat] = True
-
         return requested_columns
 
     @classmethod

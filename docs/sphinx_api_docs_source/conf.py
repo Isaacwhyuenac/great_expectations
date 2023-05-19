@@ -55,9 +55,7 @@ def skip_if_not_whitelisted(app, what, name, obj, would_skip, options):
 
     Whitelisted docstrings contain the WHITELISTED_TAG.
     """
-    if obj.__doc__ is not None and WHITELISTED_TAG in obj.__doc__:
-        return False
-    return True
+    return obj.__doc__ is None or WHITELISTED_TAG not in obj.__doc__
 
 
 def custom_process_docstring(app, what, name, obj, options, lines):
@@ -171,12 +169,11 @@ def convert_code_blocks(lines: list[str], name: str) -> None:
                 code_snippet_start = idx
                 code_snippet_end = None
 
-    if not num_triple_quotes % 2 == 0:
+    if num_triple_quotes % 2 != 0:
         raise ValueError(f"Triple quotes for code blocks in {name} must be matched.")
 
     # Replace code snippets with CodeBlock components
-    for _ in range(len(code_snippet_indices)):
-
+    for _ in code_snippet_indices:
         code_snippet_start = None
         code_snippet_end = None
 

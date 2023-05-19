@@ -265,7 +265,7 @@ def _add_text_below_string_docstring_argument(
         style=docstring_parser.DocstringStyle.GOOGLE,
     )
 
-    arg_list = list(param.arg_name for param in parsed_docstring.params)
+    arg_list = [param.arg_name for param in parsed_docstring.params]
     if argument_name not in arg_list:
         raise ValueError(
             f"Please specify an existing argument, you specified {argument_name}."
@@ -285,12 +285,8 @@ def _add_text_below_string_docstring_argument(
                 parsed_docstring.returns.description.strip(":\n")
             )
 
-    # RenderingStyle.EXPANDED used to make sure any line breaks before and
-    # after the added text are included (for Sphinx html rendering).
-    composed_docstring = docstring_parser.docstring_parser.compose(
+    return docstring_parser.docstring_parser.compose(
         docstring=parsed_docstring,
         style=docstring_parser.DocstringStyle.GOOGLE,
         rendering_style=docstring_parser.docstring_parser.RenderingStyle.EXPANDED,
     )
-
-    return composed_docstring

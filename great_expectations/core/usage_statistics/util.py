@@ -20,7 +20,7 @@ def send_usage_message(
     if not event:
         event = None
 
-    if not ((event is None) or (data_context is None)):
+    if event is not None and data_context is not None:
         if event_payload is None:
             event_payload = {}
 

@@ -301,7 +301,7 @@ class ExpectColumnValuesToBeUSZipcodeWithinMileRadiusOfGivenZipcode(
     ):
         runtime_configuration = runtime_configuration or {}
         include_column_name = (
-            False if runtime_configuration.get("include_column_name") is False else True
+            runtime_configuration.get("include_column_name") is not False
         )
         styling = runtime_configuration.get("styling")
         params = substitute_none_for_missing(
@@ -322,7 +322,7 @@ class ExpectColumnValuesToBeUSZipcodeWithinMileRadiusOfGivenZipcode(
             template_str += "."
 
         if include_column_name:
-            template_str = "$column " + template_str
+            template_str = f"$column {template_str}"
 
         return [
             RenderedStringTemplateContent(

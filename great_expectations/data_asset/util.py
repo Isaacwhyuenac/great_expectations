@@ -18,9 +18,8 @@ def parse_result_format(result_format):
     there is no need to specify a custom partial_unexpected_count."""
     if isinstance(result_format, str):
         result_format = {"result_format": result_format, "partial_unexpected_count": 20}
-    else:
-        if "partial_unexpected_count" not in result_format:
-            result_format["partial_unexpected_count"] = 20
+    elif "partial_unexpected_count" not in result_format:
+        result_format["partial_unexpected_count"] = 20
 
     return result_format
 
@@ -79,7 +78,7 @@ class DocInherit:
         return f
 
 
-def recursively_convert_to_json_serializable(test_obj):  # noqa: C901 - complexity 20
+def recursively_convert_to_json_serializable(test_obj):    # noqa: C901 - complexity 20
     """
     Helper function to convert a dict object to one that is serializable
 
@@ -123,20 +122,13 @@ def recursively_convert_to_json_serializable(test_obj):  # noqa: C901 - complexi
         return new_dict
 
     elif isinstance(test_obj, (list, tuple, set)):
-        new_list = []
-        for val in test_obj:
-            new_list.append(recursively_convert_to_json_serializable(val))
-
-        return new_list
-
+        return [recursively_convert_to_json_serializable(val) for val in test_obj]
     elif isinstance(test_obj, (np.ndarray, pd.Index)):
         # test_obj[key] = test_obj[key].tolist()
         # If we have an array or index, convert it first to a list--causing coercion to float--and then round
         # to the number of digits for which the string representation will equal the float representation
         return [recursively_convert_to_json_serializable(x) for x in test_obj.tolist()]
 
-    # Note: This clause has to come after checking for np.ndarray or we get:
-    #      `ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()`
     elif test_obj is None:
         # No problem to encode json
         return test_obj
@@ -144,8 +136,6 @@ def recursively_convert_to_json_serializable(test_obj):  # noqa: C901 - complexi
     elif isinstance(test_obj, (datetime.datetime, datetime.date)):
         return str(test_obj)
 
-    # Use built in base type from numpy, https://docs.scipy.org/doc/numpy-1.13.0/user/basics.types.html
-    # https://github.com/numpy/numpy/pull/9505
     elif np.issubdtype(type(test_obj), np.bool_):
         return bool(test_obj)
 
@@ -175,13 +165,6 @@ def recursively_convert_to_json_serializable(test_obj):  # noqa: C901 - complexi
         return recursively_convert_to_json_serializable(
             test_obj.to_dict(orient="records")
         )
-
-    # elif np.issubdtype(type(test_obj), np.complexfloating):
-    # Note: Use np.complexfloating to avoid Future Warning from numpy
-    # Complex numbers consist of two floating point numbers
-    # return complex(
-    #     float(round(test_obj.real, sys.float_info.dig)),
-    #     float(round(test_obj.imag, sys.float_info.dig)))
 
     elif isinstance(test_obj, decimal.Decimal):
         return float(test_obj)

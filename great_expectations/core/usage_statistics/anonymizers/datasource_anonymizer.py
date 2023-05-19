@@ -31,9 +31,7 @@ class DatasourceAnonymizer(BaseAnonymizer):
         return self._anonymize_datasource_info(*args, **kwargs)
 
     def _anonymize_datasource_info(self, name: str, config: dict) -> dict:
-        anonymized_info_dict = {}
-        anonymized_info_dict["anonymized_name"] = self._anonymize_string(name)
-
+        anonymized_info_dict = {"anonymized_name": self._anonymize_string(name)}
         # Datasources (>= v0.13 v3 BatchRequest API)
         if self.get_parent_class_v3_api(config=config) is not None:
             self._anonymize_object_info(
@@ -47,8 +45,7 @@ class DatasourceAnonymizer(BaseAnonymizer):
                 name=execution_engine_config.get("name", ""),
                 config=execution_engine_config,
             )
-            data_connector_configs = config.get("data_connectors")
-            if data_connector_configs:
+            if data_connector_configs := config.get("data_connectors"):
                 anonymized_info_dict["anonymized_data_connectors"] = [
                     self._aggregate_anonymizer.anonymize(
                         name=data_connector_name, config=data_connector_config
@@ -62,8 +59,7 @@ class DatasourceAnonymizer(BaseAnonymizer):
         """
         SimpleSqlalchemyDatasource requires a separate anonymization scheme.
         """
-        anonymized_info_dict = {}
-        anonymized_info_dict["anonymized_name"] = self._anonymize_string(name)
+        anonymized_info_dict = {"anonymized_name": self._anonymize_string(name)}
         if config.get("module_name") is None:
             config["module_name"] = "great_expectations.datasource"
         self._anonymize_object_info(
@@ -128,9 +124,7 @@ class DatasourceAnonymizer(BaseAnonymizer):
         return anonymized_info_dict
 
     def _anonymize_execution_engine_info(self, name: str, config: dict) -> dict:
-        anonymized_info_dict = {}
-        anonymized_info_dict["anonymized_name"] = self._anonymize_string(name)
-
+        anonymized_info_dict = {"anonymized_name": self._anonymize_string(name)}
         from great_expectations.data_context.types.base import (
             ExecutionEngineConfig,
             executionEngineConfigSchema,

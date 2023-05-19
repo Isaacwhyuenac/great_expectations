@@ -103,8 +103,7 @@ class GXExecutionEnvironment:
             # Only retrieve once
             package_names: list[str] = []
             for package in metadata.distributions():
-                package_name = package.metadata.get("Name")
-                if package_name:
+                if package_name := package.metadata.get("Name"):
                     package_names.append(package_name)
             package_names = [pn.lower() for pn in package_names]
             self._all_installed_packages = package_names

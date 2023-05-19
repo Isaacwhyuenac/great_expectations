@@ -229,8 +229,7 @@ class CheckpointAnonymizer(BaseAnonymizer):
             )
 
         for attribute_name in sorted(CHECKPOINT_OPTIONAL_TOP_LEVEL_KEYS):
-            attribute_value = kwargs.get(attribute_name)
-            if attribute_value:
+            if attribute_value := kwargs.get(attribute_name):
                 checkpoint_optional_top_level_keys.append(attribute_name)
 
         anonymized_checkpoint_run_properties_dict: Dict[str, List[str]] = {

@@ -105,8 +105,7 @@ class FileContents:
 
     @classmethod
     def create_from_local_file(cls, filepath: pathlib.Path) -> FileContents:
-        with open(filepath) as f:
-            file_contents: str = f.read()
+        file_contents: str = pathlib.Path(filepath).read_text()
         return cls(filepath=filepath, contents=file_contents)
 
     @classmethod
@@ -200,12 +199,7 @@ class DocsExampleParser:
 
     def _get_all_function_calls(self, tree: ast.AST) -> List[ast.Call]:
         """Get all the function calls from an ast tree."""
-        calls = []
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Call):
-                calls.append(node)
-
-        return calls
+        return [node for node in ast.walk(tree) if isinstance(node, ast.Call)]
 
     def _get_non_private_function_names(self, calls: List[ast.Call]) -> Set[str]:
         """Get function names that are not private from ast.Call objects."""
@@ -332,36 +326,28 @@ class CodeParser:
     def _list_class_definitions(self, tree: ast.AST) -> List[ast.ClassDef]:
         """List class definitions from an ast tree."""
 
-        class_defs = []
-
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                class_defs.append(node)
-
-        return class_defs
+        return [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
 
     def _list_function_definitions(
         self, tree: ast.AST
     ) -> List[Union[ast.FunctionDef, ast.AsyncFunctionDef]]:
         """List function definitions from an ast tree."""
-        function_definitions = []
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                function_definitions.append(node)
-
-        return function_definitions
+        return [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        ]
 
     def _list_module_level_function_definitions(
         self, tree: ast.AST
     ) -> List[Union[ast.FunctionDef, ast.AsyncFunctionDef]]:
         """List function definitions that appear outside of classes."""
 
-        function_definitions = []
-        for node in ast.iter_child_nodes(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                function_definitions.append(node)
-
-        return function_definitions
+        return [
+            node
+            for node in ast.iter_child_nodes(tree)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        ]
 
 
 def parse_docs_contents_for_class_names(file_contents: Set[FileContents]) -> Set[str]:
@@ -417,7 +403,7 @@ def get_shortest_dotted_path(
         relative_definition_path = definition.filepath
 
     # Traverse parent folders from definition.filepath
-    shortest_path_prefix = str(".".join(relative_definition_path.parts)).replace(
+    shortest_path_prefix = ".".join(relative_definition_path.parts).replace(
         ".py", ""
     )
     shortest_path = f"{shortest_path_prefix}.{definition.name}"
@@ -431,14 +417,12 @@ def get_shortest_dotted_path(
         if init_path.is_file():
 
             import_names = []
-            with open(init_path) as f:
-                file_contents: str = f.read()
-
+            file_contents: str = pathlib.Path(init_path).read_text()
             import_names.extend(_get_import_names(file_contents))
 
             # If name is found in imports, shorten path to where __init__.py is found
             if definition.name in import_names:
-                shortest_path_prefix = str(".".join(path_parts))
+                shortest_path_prefix = ".".join(path_parts)
                 shortest_path = f"{shortest_path_prefix}.{definition.name}"
 
     return shortest_path
@@ -459,9 +443,7 @@ def _get_import_names(code: str) -> List[str]:
     import_names = []
     for node in ast.walk(tree):
         if isinstance(node, (ast.Import, ast.ImportFrom)):
-            for alias in node.names:
-                import_names.append(alias.name)
-
+            import_names.extend(alias.name for alias in node.names)
     return import_names
 
 
@@ -476,38 +458,30 @@ class PublicAPIChecker:
 
     def get_all_public_api_definitions(self) -> Set[Definition]:
         """Get definitions that are marked with the public api decorator."""
-        definitions: List[Definition] = []
-
-        for (
+        definitions: List[Definition] = [
             definition
-        ) in self.code_parser.get_all_class_method_and_function_definitions():
-            if self.is_definition_marked_public_api(definition):
-                definitions.append(definition)
-
+            for definition in self.code_parser.get_all_class_method_and_function_definitions()
+            if self.is_definition_marked_public_api(definition)
+        ]
         return set(definitions)
 
     def get_module_level_function_public_api_definitions(self) -> Set[Definition]:
         """Get module level function definitions that are marked with the public api decorator."""
-        definitions: List[Definition] = []
-
-        for definition in self.code_parser.get_module_level_function_definitions():
-            if self.is_definition_marked_public_api(definition):
-                definitions.append(definition)
-
+        definitions: List[Definition] = [
+            definition
+            for definition in self.code_parser.get_module_level_function_definitions()
+            if self.is_definition_marked_public_api(definition)
+        ]
         return set(definitions)
 
     def is_definition_marked_public_api(self, definition: Definition) -> bool:
         """Determine if a definition is marked with the public api decorator."""
 
-        result = False
         found_decorators = self._get_decorator_names(
             ast_definition=definition.ast_definition
         )
 
-        if PUBLIC_API_DECORATOR_NAME in found_decorators:
-            result = True
-
-        return result
+        return PUBLIC_API_DECORATOR_NAME in found_decorators
 
     def _get_decorator_names(
         self, ast_definition: Union[ast.FunctionDef, ast.ClassDef, ast.AsyncFunctionDef]
@@ -519,8 +493,6 @@ class PublicAPIChecker:
                 return f"{str(flatten_attr(node.value))}.{node.attr}"
             elif isinstance(node, ast.Name):
                 return str(node.id)
-            else:
-                pass
 
         found_decorators = []
         for decorator in ast_definition.decorator_list:
@@ -575,15 +547,8 @@ class CodeReferenceFilter:
         else:
             self.references_from_docs_content = references_from_docs_content
 
-        if not excludes:
-            self.excludes = self.DEFAULT_EXCLUDES
-        else:
-            self.excludes = excludes
-
-        if not includes:
-            self.includes = self.DEFAULT_INCLUDES
-        else:
-            self.includes = includes
+        self.excludes = self.DEFAULT_EXCLUDES if not excludes else excludes
+        self.includes = self.DEFAULT_INCLUDES if not includes else includes
 
     def filter_definitions(self) -> Set[Definition]:
         """Main method to perform all filtering.
@@ -631,10 +596,7 @@ class CodeReferenceFilter:
         ] = self.docs_example_parser.get_names_from_usage_in_docs_examples()
         gx_code_definitions = self.code_parser.get_all_class_method_and_function_names()
 
-        doc_example_usages_of_gx_code = doc_example_usages.intersection(
-            gx_code_definitions
-        )
-        return doc_example_usages_of_gx_code
+        return doc_example_usages.intersection(gx_code_definitions)
 
     def _filter_gx_definitions_from_docs_examples(
         self, gx_usages_in_docs_examples: Set[str]
@@ -651,10 +613,9 @@ class CodeReferenceFilter:
         gx_code_definitions = (
             self.code_parser.get_all_class_method_and_function_definitions()
         )
-        gx_code_definitions_appearing_in_docs_examples = {
+        return {
             d for d in gx_code_definitions if d.name in gx_usages_in_docs_examples
         }
-        return gx_code_definitions_appearing_in_docs_examples
 
     def _filter_private_entities(self, definitions: Set[Definition]) -> Set[Definition]:
         """Filter out private entities (classes, methods and functions with leading underscore)."""
@@ -806,11 +767,7 @@ class PublicAPIReport:
                 f"File: {filepath} Name: {definition.name}"
             )
 
-        sorted_definitions_strings_no_dupes = self._deduplicate_strings(
-            sorted_definitions_strings
-        )
-
-        return sorted_definitions_strings_no_dupes
+        return self._deduplicate_strings(sorted_definitions_strings)
 
     def _deduplicate_strings(self, strings: List[str]) -> List[str]:
         """Deduplicate a list of strings, keeping order intact."""
@@ -825,8 +782,7 @@ class PublicAPIReport:
 
 
 def _repo_root() -> pathlib.Path:
-    repo_root_path = pathlib.Path(__file__).parents[2]
-    return repo_root_path
+    return pathlib.Path(__file__).parents[2]
 
 
 def _default_doc_example_absolute_paths() -> Set[pathlib.Path]:
@@ -853,11 +809,8 @@ def _default_docs_absolute_paths() -> Set[pathlib.Path]:
 
 
 def _parse_file_to_ast_tree(filepath: pathlib.Path) -> ast.AST:
-    with open(filepath) as f:
-        file_contents: str = f.read()
-
-    tree = ast.parse(file_contents)
-    return tree
+    file_contents: str = pathlib.Path(filepath).read_text()
+    return ast.parse(file_contents)
 
 
 def generate_public_api_report(write_to_file: bool = False) -> None:
@@ -916,8 +869,6 @@ def generate_public_api_report(write_to_file: bool = False) -> None:
             logger.error(
                 f"The {len(difference)} items missing from the public API that are not accounted for are as follows:"
             )
-            for item in difference:
-                logger.error(item)
         else:
             logger.error(f"{error_msg_prefix} Please reduce the threshold.")
             difference = set(
@@ -926,8 +877,8 @@ def generate_public_api_report(write_to_file: bool = False) -> None:
             logger.error(
                 f"The {len(difference)} items that are now accounted for and should be removed from the threshold list in docs/sphinx_api_docs_source/public_api_missing_threshold.py are:"
             )
-            for item in difference:
-                logger.error(item)
+        for item in difference:
+            logger.error(item)
         sys.exit(1)
     else:
         logger.info(

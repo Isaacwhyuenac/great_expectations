@@ -73,8 +73,9 @@ class ExpectQueriedColumnPairValuesToHaveDiff(QueryExpectation):
         query_result = dict([element.values() for element in query_result])
 
         success = (
-            sum([(abs(x[0]) == diff) for x in query_result]) / len(query_result)
-        ) >= mostly
+            sum(abs(x[0]) == diff for x in query_result) / len(query_result)
+            >= mostly
+        )
 
         return {
             "success": success,

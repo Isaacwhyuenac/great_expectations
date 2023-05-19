@@ -17,8 +17,7 @@ class StoreAnonymizer(BaseAnonymizer):
     def anonymize(
         self, store_name: str, store_obj: Store, obj: Optional[object] = None
     ) -> Any:
-        anonymized_info_dict = {}
-        anonymized_info_dict["anonymized_name"] = self._anonymize_string(store_name)
+        anonymized_info_dict = {"anonymized_name": self._anonymize_string(store_name)}
         store_backend_obj = store_obj.store_backend
 
         self._anonymize_object_info(

@@ -116,26 +116,17 @@ class BatchManager:
     @property
     def active_batch_spec(self) -> Optional[BatchSpec]:
         """Getter for active batch's batch_spec"""
-        if not self.active_batch:
-            return None
-
-        return self.active_batch.batch_spec
+        return None if not self.active_batch else self.active_batch.batch_spec
 
     @property
     def active_batch_markers(self) -> Optional[BatchMarkers]:
         """Getter for active batch's batch markers"""
-        if not self.active_batch:
-            return None
-
-        return self.active_batch.batch_markers
+        return None if not self.active_batch else self.active_batch.batch_markers
 
     @property
     def active_batch_definition(self) -> Optional[BatchDefinition]:
         """Getter for the active batch's batch definition"""
-        if not self.active_batch:
-            return None
-
-        return self.active_batch.batch_definition
+        return None if not self.active_batch else self.active_batch.batch_definition
 
     def reset_batch_cache(self) -> None:
         """Clears Batch cache"""

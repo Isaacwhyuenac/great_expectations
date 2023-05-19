@@ -13,18 +13,9 @@ from great_expectations.expectations.metrics import (
 
 def is_valid_state(state: str, dc_statehood: bool):
     list_of_states = [str(x) for x in us.states.STATES]
-    if dc_statehood is True:
+    if dc_statehood:
         list_of_states.append("District Of Columbia")
-    else:
-        pass
-    if len(state) > 20:
-        return False
-    elif type(state) != str:
-        return False
-    elif state in list_of_states:
-        return True
-    else:
-        return False
+    return len(state) <= 20 and type(state) == str and state in list_of_states
 
 
 # This class defines a Metric to support your Expectation.

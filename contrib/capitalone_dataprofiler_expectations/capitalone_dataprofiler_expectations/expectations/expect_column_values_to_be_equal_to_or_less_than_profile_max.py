@@ -47,7 +47,7 @@ class ColumnValuesLessThanOrEqualToProfileMax(ColumnMapMetricProvider):
         ]  # Gets index of column from profile
 
         dataType = profile["data_stats"][index]["data_type"]  # Checks datatype
-        if dataType != "int" and dataType != "float":  # Err non-numerical column
+        if dataType not in ["int", "float"]:  # Err non-numerical column
             return transpose != transpose  # Returns 100% unexpected
 
         maximum = float(profile["data_stats"][index]["statistics"]["max"])

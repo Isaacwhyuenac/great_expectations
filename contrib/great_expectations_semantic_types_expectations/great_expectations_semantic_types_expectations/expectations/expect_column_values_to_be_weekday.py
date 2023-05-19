@@ -18,17 +18,11 @@ from great_expectations.expectations.metrics import (
 
 def is_weekday(ds) -> bool:
     try:
-        if isinstance(ds, str):
-            d = parse(ds)
-        else:
-            d = ds
+        d = parse(ds) if isinstance(ds, str) else ds
         print(d)
     except Exception:
         return False
-    if not d.weekday() > 4:
-        return True
-    else:
-        return False
+    return d.weekday() <= 4
 
 
 # This class defines a Metric to support your Expectation.

@@ -82,8 +82,7 @@ class ColumnValuesGeometryWithinPlace(ColumnMapMetricProvider):
     def geocode(geocoder, config, query, query_config):
         cls = geopy.geocoders.get_geocoder_for_service(geocoder)
         geolocator = cls(**config)
-        location = geolocator.geocode(query, **query_config)
-        return location
+        return geolocator.geocode(query, **query_config)
 
     # This method defines the business logic for evaluating your metric when using a SqlAlchemyExecutionEngine
     # @column_condition_partial(engine=SqlAlchemyExecutionEngine)

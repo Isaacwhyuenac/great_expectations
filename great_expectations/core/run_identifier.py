@@ -98,8 +98,7 @@ class RunIdentifier(DataContextKey):
         Returns:
             A JSON-serializable dict representation of this RunIdentifier.
         """
-        myself = runIdentifierSchema.dump(self)
-        return myself
+        return runIdentifierSchema.dump(self)
 
     def set_run_time_tz(self, tz: datetime.timezone | None):
         """Localize the run_time to the given timezone, or default to system local tz.

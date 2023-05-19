@@ -181,7 +181,7 @@ class SimpleCheckpointConfigurator:
             "action_list": action_list,
             "ge_cloud_id": self.other_kwargs.pop("ge_cloud_id", None),
         }
-        config_kwargs.update(specific_config_kwargs_overrides)
+        config_kwargs |= specific_config_kwargs_overrides
 
         # Roundtrip through schema validation to remove any illegal fields add/or restore any missing fields.
         checkpoint_config: dict = checkpointConfigSchema.load(

@@ -93,9 +93,7 @@ class ProfilerAnonymizer(BaseAnonymizer):
         return anonymized_rules
 
     def _anonymize_rule(self, name: str, rule: dict) -> dict:
-        anonymized_rule: dict = {}
-        anonymized_rule["anonymized_name"] = self._anonymize_string(name)
-
+        anonymized_rule: dict = {"anonymized_name": self._anonymize_string(name)}
         domain_builder: Optional[dict] = rule.get("domain_builder")
         if domain_builder is not None:
             anonymized_rule[
@@ -127,8 +125,7 @@ class ProfilerAnonymizer(BaseAnonymizer):
             },
         )
 
-        batch_request: Optional[dict] = domain_builder.get("batch_request")
-        if batch_request:
+        if batch_request := domain_builder.get("batch_request"):
             anonymized_batch_request: Optional[
                 dict
             ] = self._aggregate_anonymizer.anonymize(**batch_request)
@@ -165,8 +162,7 @@ class ProfilerAnonymizer(BaseAnonymizer):
             parameter_builder.get("name")
         )
 
-        batch_request: Optional[dict] = parameter_builder.get("batch_request")
-        if batch_request:
+        if batch_request := parameter_builder.get("batch_request"):
             anonymized_batch_request: Optional[
                 dict
             ] = self._aggregate_anonymizer.anonymize(**batch_request)
@@ -212,8 +208,7 @@ class ProfilerAnonymizer(BaseAnonymizer):
             expectation_type, anonymized_expectation_configuration_builder
         )
 
-        condition: Optional[str] = expectation_configuration_builder.get("condition")
-        if condition:
+        if condition := expectation_configuration_builder.get("condition"):
             anonymized_expectation_configuration_builder[
                 "anonymized_condition"
             ] = self._anonymize_string(condition)

@@ -180,26 +180,21 @@ def test_profile_data_profiler_structured_data_assistant_metrics_count(
         domain_type=MetricDomainTypes.TABLE,
     )
 
-    num_metrics = 0
-    for (
-        domain,
-        parameter_values_for_fully_qualified_parameter_names,
-    ) in (
-        bobby_profile_data_profiler_structured_data_assistant_result.metrics_by_domain.items()
-    ):
-        if domain.is_superset(other=domain_key):
-            num_metrics += len(parameter_values_for_fully_qualified_parameter_names)
-
+    num_metrics = sum(
+        len(parameter_values_for_fully_qualified_parameter_names)
+        for domain, parameter_values_for_fully_qualified_parameter_names in (
+            bobby_profile_data_profiler_structured_data_assistant_result.metrics_by_domain.items()
+        )
+        if domain.is_superset(other=domain_key)
+    )
     assert num_metrics == 0
 
-    num_metrics = 0
-    for (
-        domain,
-        parameter_values_for_fully_qualified_parameter_names,
-    ) in (
-        bobby_profile_data_profiler_structured_data_assistant_result.metrics_by_domain.items()
-    ):
-        num_metrics += len(parameter_values_for_fully_qualified_parameter_names)
+    num_metrics = sum(
+        len(parameter_values_for_fully_qualified_parameter_names)
+        for domain, parameter_values_for_fully_qualified_parameter_names in (
+            bobby_profile_data_profiler_structured_data_assistant_result.metrics_by_domain.items()
+        )
+    )
     assert (
         num_metrics == 50
     )  # 2 * ((numeric_rule: 6 int + 9 float + 1 string) + (float_rule: 9 float))

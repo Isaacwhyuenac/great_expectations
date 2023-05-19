@@ -274,7 +274,7 @@ class ExpectColumnValuesPointWithinGeoRegion(ColumnMapExpectation):
     ):
         runtime_configuration = runtime_configuration or {}
         include_column_name = (
-            False if runtime_configuration.get("include_column_name") is False else True
+            runtime_configuration.get("include_column_name") is not False
         )
         styling = runtime_configuration.get("styling")
         params = substitute_none_for_missing(
@@ -285,9 +285,8 @@ class ExpectColumnValuesPointWithinGeoRegion(ColumnMapExpectation):
         template_str = "values must be inside "
         if params["country_iso_a3"] is not None:
             template_str = "$country_iso_a3 country"
-        else:
-            if params["polygon_points"] is not None:
-                template_str = "polygon defined by $polygon_points"
+        elif params["polygon_points"] is not None:
+            template_str = "polygon defined by $polygon_points"
         if params["mostly"] is not None:
             params["mostly_pct"] = num_to_str(
                 params["mostly"] * 100, precision=15, no_scientific=True
@@ -298,7 +297,7 @@ class ExpectColumnValuesPointWithinGeoRegion(ColumnMapExpectation):
             template_str += "."
 
         if include_column_name:
-            template_str = "$column " + template_str
+            template_str = f"$column {template_str}"
 
         return [
             RenderedStringTemplateContent(

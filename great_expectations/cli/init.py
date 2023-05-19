@@ -66,18 +66,15 @@ def init(ctx: click.Context, usage_stats: bool) -> None:
         message = f"""Warning. An existing `{FileDataContext.GX_YML}` was found here: {ge_dir}."""
         warnings.warn(message)
         try:
-            project_file_structure_exists = FileDataContext.is_project_scaffolded(
+            if project_file_structure_exists := FileDataContext.is_project_scaffolded(
                 ge_dir
-            )
-            if project_file_structure_exists:
+            ):
                 cli_message(PROJECT_IS_COMPLETE)
                 sys.exit(0)
-            else:
-                # Prompt to modify the project to add missing files
+            elif not click.confirm(COMPLETE_ONBOARDING_PROMPT, default=True):
                 if not ctx.obj.assume_yes:
-                    if not click.confirm(COMPLETE_ONBOARDING_PROMPT, default=True):
-                        cli_message(RUN_INIT_AGAIN)
-                        exit(0)
+                    cli_message(RUN_INIT_AGAIN)
+                    exit(0)
 
         except (DataContextError, DatasourceInitializationError) as e:
             cli_message(f"<red>{e.message}</red>")
@@ -94,8 +91,8 @@ def init(ctx: click.Context, usage_stats: bool) -> None:
             # TODO ensure this is covered by a test
             exit(5)
     else:
-        if not ctx.obj.assume_yes:
-            if not click.confirm(LETS_BEGIN_PROMPT, default=True):
+        if not click.confirm(LETS_BEGIN_PROMPT, default=True):
+            if not ctx.obj.assume_yes:
                 cli_message(RUN_INIT_AGAIN)
                 exit(0)
 

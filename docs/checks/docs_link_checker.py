@@ -64,10 +64,10 @@ class LinkChecker:
         """
         self._docs_path = docs_path.strip(os.path.sep)
         self._docs_root = docs_root.strip(os.path.sep)
-        self._site_prefix = site_prefix.strip("/")
         self._skip_external = skip_external
 
         markdown_link_regex = r"!?\[(.*)\]\((.*?)\)"  # inline links, like [Description](link), images start with !
+        self._site_prefix = site_prefix.strip("/")
         self._markdown_link_pattern = re.compile(markdown_link_regex)
 
         external_link_regex = r"^https?:\/\/"  # links that start with http or https
@@ -81,8 +81,7 @@ class LinkChecker:
         # ex: ^/docs(?:/(?P<version>\d{1,2}\.\d{1,2}\.\d{1,2}))?/(?P<path>[\w/-]+?)(?:#\S+)?$
         #     /docs/0.15.50/cli#anchor
         absolute_link_regex = (
-            r"^/"
-            + site_prefix
+            f"^/{site_prefix}"
             + r"(?:/(?P<version>\d{1,2}\.\d{1,2}\.\d{1,2}))?/(?P<path>[\w/-]+?)(?:#\S+)?$"
         )
         self._absolute_link_pattern = re.compile(absolute_link_regex)
@@ -246,7 +245,7 @@ class LinkChecker:
         Returns:
             A LinkReport if the link is broken, otherwise None
         """
-        link = match.group(2)
+        link = match[2]
 
         # skip links that are anchor only (start with #)
         if self._is_anchor_link(link):
@@ -254,35 +253,27 @@ class LinkChecker:
 
         if self._external_link_pattern.match(link):
             result = self._check_external_link(link, file)
-        elif self._is_image_link(match.group(0)):
-            match = self._relative_image_pattern.match(link)  # type: ignore[assignment]
-            if match:
+        elif self._is_image_link(match[0]):
+            if match := self._relative_image_pattern.match(link):
                 result = self._check_relative_image(link, file, match.group("path"))
             else:
-                match = self._absolute_image_pattern.match(link)  # type: ignore[assignment]
-                if match:
-                    result = self._check_absolute_image(link, file, match.group("path"))
-                else:
-                    result = LinkReport(link, file, "Invalid image link format")
+                result = (
+                    self._check_absolute_image(link, file, match.group("path"))
+                    if (match := self._absolute_image_pattern.match(link))
+                    else LinkReport(link, file, "Invalid image link format")
+                )
+        elif match := self._relative_link_pattern.match(link):
+            result = self._check_relative_link(link, file, match.group("path"))
+        elif match := self._absolute_link_pattern.match(link):
+            result = self._check_absolute_link(
+                link, file, match.group("path"), match.group("version")
+            )
         else:
-            match = self._relative_link_pattern.match(link)  # type: ignore[assignment]
-            if match:
-                result = self._check_relative_link(link, file, match.group("path"))
-            else:
-                match = self._absolute_link_pattern.match(link)  # type: ignore[assignment]
-                if match:
-                    result = self._check_absolute_link(
-                        link, file, match.group("path"), match.group("version")
-                    )
-                else:
-                    match = self._docroot_link_pattern.match(link)  # type: ignore[assignment]
-                    if match:
-                        result = self._check_docroot_link(
-                            link, file, match.group("path")
-                        )
-                    else:
-                        result = LinkReport(link, file, "Invalid link format")
-
+            result = (
+                self._check_docroot_link(link, file, match.group("path"))
+                if (match := self._docroot_link_pattern.match(link))
+                else LinkReport(link, file, "Invalid link format")
+            )
         return result
 
     def check_file(self, file: str) -> List[LinkReport]:
@@ -299,17 +290,11 @@ class LinkChecker:
         result: List[LinkReport] = []
 
         for match in matches:
-            report = self._check_link(match, file)
-
-            if report:
+            if report := self._check_link(match, file):
                 result.append(report)
 
-            # sometimes the description may contain a reference to an image
-            nested_match = self._markdown_link_pattern.match(match.group(1))
-            if nested_match:
-                report = self._check_link(nested_match, file)
-
-                if report:
+            if nested_match := self._markdown_link_pattern.match(match.group(1)):
+                if report := self._check_link(nested_match, file):
                     result.append(report)
 
         return result
@@ -354,14 +339,13 @@ def scan_docs(
         return 1, f"Docs root path: {docs_root} is not a directory"
 
     # prepare our return value
-    result: List[LinkReport] = list()
+    result: List[LinkReport] = []
     checker = LinkChecker(path, docs_root, site_prefix, skip_external)
 
     if os.path.isdir(path):  # noqa: PTH112
         # if the path is a directory, get all .md files within it
         for file in glob.glob(f"{path}/**/*.md", recursive=True):
-            report = checker.check_file(file)
-            if report:
+            if report := checker.check_file(file):
                 result.extend(report)
     elif os.path.isfile(path):  # noqa: PTH113
         # else we support checking one file at a time
@@ -369,17 +353,15 @@ def scan_docs(
     else:
         return 1, f"Docs path: {path} is not a directory or file"
 
-    if result:
-        message: list[str] = []
-        message.append("----------------------------------------------")
-        message.append("------------- Broken Link Report -------------")
-        message.append("----------------------------------------------")
-        for line in result:
-            message.append(str(line))
-
-        return 1, "\n".join(message)
-    else:
+    if not result:
         return 0, "No broken links found"
+    message: list[str] = [
+        "----------------------------------------------",
+        "------------- Broken Link Report -------------",
+        "----------------------------------------------",
+    ]
+    message.extend(str(line) for line in result)
+    return 1, "\n".join(message)
 
 
 def main():

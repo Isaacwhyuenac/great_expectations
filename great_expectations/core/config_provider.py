@@ -98,7 +98,7 @@ class _ConfigurationProvider(_AbstractConfigurationProvider):
         """
         values: Dict[str, str] = {}
         for provider in self._providers.values():
-            values.update(provider.get_values())
+            values |= provider.get_values()
         return values
 
 
@@ -187,8 +187,6 @@ class _CloudConfigurationProvider(_AbstractConfigurationProvider):
 
         base_url = self._cloud_config.base_url
         access_token = self._cloud_config.access_token
-        organization_id = self._cloud_config.organization_id
-
         cloud_values: Dict[str, str] = {
             GXCloudEnvironmentVariable.BASE_URL: base_url,
             GXCloudEnvironmentVariable.ACCESS_TOKEN: access_token,
@@ -197,14 +195,11 @@ class _CloudConfigurationProvider(_AbstractConfigurationProvider):
             GXCloudEnvironmentVariable._OLD_ACCESS_TOKEN: access_token,
         }
 
-        # organization_id is nullable so we conditionally include it in the output
-        if organization_id:
-            cloud_values.update(
-                {
-                    GXCloudEnvironmentVariable.ORGANIZATION_ID: organization_id,
-                    # <GX_RENAME> Deprecated as of 0.15.37
-                    GXCloudEnvironmentVariable._OLD_ORGANIZATION_ID: organization_id,
-                }
-            )
+        if organization_id := self._cloud_config.organization_id:
+            cloud_values |= {
+                GXCloudEnvironmentVariable.ORGANIZATION_ID: organization_id,
+                # <GX_RENAME> Deprecated as of 0.15.37
+                GXCloudEnvironmentVariable._OLD_ORGANIZATION_ID: organization_id,
+            }
 
         return cloud_values

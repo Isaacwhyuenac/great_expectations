@@ -39,7 +39,7 @@ class ColumnValuesStringIntegersIncreasing(ColumnMapMetricProvider):
 
     @column_function_partial(engine=PandasExecutionEngine)
     def _pandas(self, _column, **kwargs):
-        if all(_column.str.isdigit()) is True:
+        if all(_column.str.isdigit()):
             temp_column = _column.astype(int)
         else:
             raise TypeError(
@@ -48,9 +48,7 @@ class ColumnValuesStringIntegersIncreasing(ColumnMapMetricProvider):
 
         series_diff = np.diff(temp_column)
 
-        strictly: Optional[bool] = kwargs.get("strictly") or False
-
-        if strictly:
+        if strictly := kwargs.get("strictly") or False:
             return series_diff > 0
         else:
             return series_diff >= 0
@@ -198,21 +196,16 @@ class ExpectColumnValuesToBeStringIntegersIncreasing(ColumnAggregateExpectation)
         "catch_exceptions": False,
     }
 
-    def _validate_success_key(
-        param: str,
-        required: bool,
-        configuration: Optional[ExpectationConfiguration],
-        validation_rules: Dict[Callable, str],
-    ) -> None:
+    def _validate_success_key(self, required: bool, configuration: Optional[ExpectationConfiguration], validation_rules: Dict[Callable, str]) -> None:
         """"""
-        if param not in configuration.kwargs:
+        if self not in configuration.kwargs:
             if required:
                 raise InvalidExpectationKwargsError(
-                    f"Parameter {param} is required but was not found in configuration."
+                    f"Parameter {self} is required but was not found in configuration."
                 )
             return
 
-        param_value = configuration.kwargs[param]
+        param_value = configuration.kwargs[self]
 
         for rule, error_message in validation_rules.items():
             if not rule(param_value):

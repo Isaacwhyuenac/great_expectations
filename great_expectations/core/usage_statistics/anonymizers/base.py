@@ -65,20 +65,24 @@ class BaseAnonymizer(ABC):
             object_ or object_class or object_config
         ), "Must pass either object_ or object_class or object_config."
         try:
-            if object_class is None and object_ is not None:
-                object_class = object_.__class__
-            elif object_class is None and object_config is not None:
-                object_class_name = object_config.get("class_name")
-                object_module_name = object_config.get("module_name")
-                object_class = load_class(object_class_name, object_module_name)
+            if object_class is None:
+                if object_ is not None:
+                    object_class = object_.__class__
+                elif object_config is not None:
+                    object_class_name = object_config.get("class_name")
+                    object_module_name = object_config.get("module_name")
+                    object_class = load_class(object_class_name, object_module_name)
 
             # Utilize candidate list if provided.
             if classes_to_check:
-                for class_to_check in classes_to_check:
-                    if issubclass(object_class, class_to_check):
-                        return class_to_check.__name__
-                return None
-
+                return next(
+                    (
+                        class_to_check.__name__
+                        for class_to_check in classes_to_check
+                        if issubclass(object_class, class_to_check)
+                    ),
+                    None,
+                )
             # Otherwise, iterate through parents in inheritance hierarchy.
             parents: Tuple[type, ...] = object_class.__bases__
             parent_class: type
@@ -186,9 +190,7 @@ class BaseAnonymizer(ABC):
                         parent_class_list.append(parent_class.__name__)
 
                 if parent_class_list:
-                    concatenated_parent_classes: str = ",".join(
-                        cls for cls in parent_class_list
-                    )
+                    concatenated_parent_classes: str = ",".join(parent_class_list)
                     anonymized_info_dict["parent_class"] = concatenated_parent_classes
                     anonymized_info_dict["anonymized_class"] = self._anonymize_string(
                         object_class_name

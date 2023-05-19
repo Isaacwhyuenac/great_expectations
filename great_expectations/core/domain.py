@@ -88,27 +88,22 @@ not supported).
         if details is None:
             details = {}
 
-        inferred_semantic_domain_type: Optional[
-            Dict[str, Union[str, SemanticDomainTypes]]
-        ] = details.get(INFERRED_SEMANTIC_TYPE_KEY)
-        if inferred_semantic_domain_type:
+        if inferred_semantic_domain_type := details.get(
+            INFERRED_SEMANTIC_TYPE_KEY
+        ):
             semantic_domain_key: str
             metric_domain_key: str
             metric_domain_value: Any
             is_consistent: bool
             for semantic_domain_key in inferred_semantic_domain_type:
-                is_consistent = False
-                for (
-                    metric_domain_key,
-                    metric_domain_value,
-                ) in domain_kwargs_dot_dict.items():
-                    if (
+                is_consistent = any(
+                    (
                         isinstance(metric_domain_value, (list, set, tuple))
                         and semantic_domain_key in metric_domain_value
-                    ) or (semantic_domain_key == metric_domain_value):
-                        is_consistent = True
-                        break
-
+                    )
+                    or (semantic_domain_key == metric_domain_value)
+                    for metric_domain_key, metric_domain_value in domain_kwargs_dot_dict.items()
+                )
                 if not is_consistent:
                     raise ValueError(
                         f"""Cannot instantiate Domain (domain_type "{str(domain_type)}" of type \
@@ -156,10 +151,7 @@ not exist as value of appropriate key in "domain_kwargs" dictionary.
 
     def is_superset(self, other: Domain) -> bool:
         """Determines if other "Domain" object (provided as argument) is contained within this "Domain" object."""
-        if other is None:
-            return True
-
-        return other.is_subset(other=self)
+        return True if other is None else other.is_subset(other=self)
 
     def is_subset(self, other: Domain) -> bool:
         """Determines if this "Domain" object is contained within other "Domain" object (provided as argument)."""

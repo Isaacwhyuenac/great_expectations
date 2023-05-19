@@ -141,9 +141,7 @@ def fcc_projection(loc1, loc2):
         + (0.00012 * cos(5 * mean_lat))
     )
 
-    distance = sqrt((k1 * delta_lat) ** 2 + (k2 * delta_lon) ** 2)
-
-    return distance
+    return sqrt((k1 * delta_lat) ** 2 + (k2 * delta_lon) ** 2)
 
 
 def pythagorean_projection(loc1, loc2):
@@ -165,9 +163,7 @@ def pythagorean_projection(loc1, loc2):
 
     radius = 6371.009
 
-    distance = radius * sqrt((delta_lat**2) + (cos(mean_lat) * delta_lon) ** 2)
-
-    return distance
+    return radius * sqrt((delta_lat**2) + (cos(mean_lat) * delta_lon) ** 2)
 
 
 # This class defines the Expectation itself
@@ -248,9 +244,7 @@ class ExpectColumnValuesToBeLatLonCoordinatesInRangeOfGivenPoint(ColumnMapExpect
             assert (
                 center_point is not None and range is not None
             ), "center_point and range must be specified"
-            assert (
-                isinstance(center_point, tuple) or isinstance(center_point, list)
-            ) and all(
+            assert (isinstance(center_point, (tuple, list))) and all(
                 isinstance(n, float) for n in center_point
             ), "center_point must be a tuple or list of lat/lon floats"
             assert (center_point[0] >= -90 and center_point[0] <= 90) and (
@@ -460,7 +454,7 @@ class ExpectColumnValuesToBeLatLonCoordinatesInRangeOfGivenPoint(ColumnMapExpect
     ]:
         runtime_configuration = runtime_configuration or {}
         include_column_name = (
-            False if runtime_configuration.get("include_column_name") is False else True
+            runtime_configuration.get("include_column_name") is not False
         )
         styling = runtime_configuration.get("styling")
         params = substitute_none_for_missing(
@@ -478,14 +472,10 @@ class ExpectColumnValuesToBeLatLonCoordinatesInRangeOfGivenPoint(ColumnMapExpect
         if params["mostly"] is None:
             template_str = "values must be in $projection projection within $range $unit of $center_point"
         else:
-            if params["mostly"] is not None:
-                params["mostly_pct"] = num_to_str(
-                    params["mostly"] * 100, precision=15, no_scientific=True
-                )
-                template_str += ", at least $mostly_pct % of the time."
-            else:
-                template_str += "."
-
+            params["mostly_pct"] = num_to_str(
+                params["mostly"] * 100, precision=15, no_scientific=True
+            )
+            template_str += ", at least $mostly_pct % of the time."
         if include_column_name:
             template_str = f"$column {template_str}"
 

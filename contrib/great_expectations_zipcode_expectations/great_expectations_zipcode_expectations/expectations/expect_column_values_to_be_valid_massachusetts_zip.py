@@ -16,14 +16,11 @@ def is_valid_massachusetts_zip(zip: str):
     list_of_massachusetts_zips = [
         d["zip_code"] for d in list_of_dicts_of_massachusetts_zips
     ]
-    if len(zip) > 10:
-        return False
-    elif type(zip) != str:
-        return False
-    elif zip in list_of_massachusetts_zips:
-        return True
-    else:
-        return False
+    return (
+        len(zip) <= 10
+        and type(zip) == str
+        and zip in list_of_massachusetts_zips
+    )
 
 
 # This class defines a Metric to support your Expectation.

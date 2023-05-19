@@ -26,8 +26,7 @@ from great_expectations.expectations.core.expect_column_stdev_to_be_between impo
 
 @pytest.fixture
 def package() -> GreatExpectationsContribPackageManifest:
-    package = GreatExpectationsContribPackageManifest()
-    return package
+    return GreatExpectationsContribPackageManifest()
 
 
 @pytest.fixture
@@ -37,7 +36,7 @@ def diagnostics() -> List[ExpectationDiagnostics]:
         ExpectColumnMostCommonValueToBeInSet,
         ExpectColumnStdevToBeBetween,
     ]
-    diagnostics = list(
+    return list(
         map(
             lambda e: e().run_diagnostics(
                 only_consider_these_backends=["pandas", "sqlite"]
@@ -45,7 +44,6 @@ def diagnostics() -> List[ExpectationDiagnostics]:
             expectations,
         )
     )
-    return diagnostics
 
 
 def test_update_expectations(

@@ -212,7 +212,7 @@ class ExpectColumnValuesToBePolygonAreaBetween(ColumnMapExpectation):
     ]:
         runtime_configuration = runtime_configuration or {}
         include_column_name = (
-            False if runtime_configuration.get("include_column_name") is False else True
+            runtime_configuration.get("include_column_name") is not False
         )
         styling = runtime_configuration.get("styling")
         params = substitute_none_for_missing(
@@ -229,19 +229,18 @@ class ExpectColumnValuesToBePolygonAreaBetween(ColumnMapExpectation):
         template_str = "values must be in $crs crs "
         if (params["min_area"] is None) and (params["max_area"] is None):
             template_str += "and may have any area"
+        elif params["min_value"] is not None and params["max_value"] is not None:
+            template_str += "and have area less than or equal $min_area and greater than or equal $max_area in square kilometers"
+
+        elif params["min_value"] is None:
+            template_str += (
+                "and have area greater than or equal $max_area in square kilometers"
+            )
+
         else:
-            if params["min_value"] is not None and params["max_value"] is not None:
-                template_str += "and have area less than or equal $min_area and greater than or equal $max_area in square kilometers"
-
-            elif params["min_value"] is None:
-                template_str += (
-                    "and have area greater than or equal $max_area in square kilometers"
-                )
-
-            elif params["max_value"] is None:
-                template_str += (
-                    "and have area less than or equal $min_area in square kilometers"
-                )
+            template_str += (
+                "and have area less than or equal $min_area in square kilometers"
+            )
 
         if params["mostly"] is None:
             template_str += "."
