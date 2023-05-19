@@ -230,8 +230,7 @@ def measure_execution_time(
                         )
                         call_args: OrderedDict = bound_args.arguments
                         print(
-                            f"""Total execution time of function {func.__name__}({str(dict(call_args))}): {delta_t} \
-seconds."""
+                            f"""Total execution time of function {func.__name__}({dict(call_args)}): {delta_t} \\n                        #seconds."""
                         )
                     else:
                         print(
@@ -310,10 +309,10 @@ def get_currently_executing_function_call_arguments(
 
     for key, value in var_keyword.items():
         call_args_dict.pop(key)
-        call_args_dict.update(value)
+        call_args_dict |= value
 
     if include_module_name:
-        call_args_dict.update({"module_name": cur_mod.__name__})  # type: ignore[union-attr]
+        call_args_dict["module_name"] = cur_mod.__name__
 
     if not include_caller_names:
         if call_args.get("cls"):
@@ -913,9 +912,7 @@ def build_in_memory_runtime_context() -> AbstractDataContext:
         store_backend_defaults=InMemoryStoreBackendDefaults(),
     )
 
-    context = get_context(project_config=data_context_config)
-
-    return context
+    return get_context(project_config=data_context_config)
 
 
 def validate(
@@ -1026,11 +1023,9 @@ def validate(
         )
 
     if not issubclass(type(data_asset), data_asset_class):
-        if isinstance(data_asset, pd.DataFrame) and issubclass(
+        if not isinstance(data_asset, pd.DataFrame) or not issubclass(
             data_asset_class, PandasDataset
         ):
-            pass  # This is a special type of allowed coercion
-        else:
             raise ValueError(
                 "The validate util method only supports validation for subtypes of the provided data_asset_type."
             )
@@ -1058,9 +1053,7 @@ def gen_directory_tree_str(startpath):
 
     output_str = ""
 
-    tuples = list(os.walk(startpath))
-    tuples.sort()
-
+    tuples = sorted(os.walk(startpath))
     for root, dirs, files in tuples:
         level = root.replace(startpath, "").count(os.sep)
         indent = " " * 4 * level
@@ -1090,8 +1083,7 @@ def lint_code(code: str) -> str:
     if not isinstance(code, str):
         raise TypeError
     try:
-        linted_code = black.format_file_contents(code, fast=True, mode=black_file_mode)
-        return linted_code
+        return black.format_file_contents(code, fast=True, mode=black_file_mode)
     except (black.NothingChanged, RuntimeError):
         return code
 
@@ -1246,10 +1238,7 @@ def filter_properties_dict(
     for key in keys_for_deletion:
         del properties[key]
 
-    if inplace:
-        return None
-
-    return properties
+    return None if inplace else properties
 
 
 @overload
@@ -1404,10 +1393,7 @@ def deep_filter_properties_iterable(
             )
         )
 
-    if inplace:
-        return None
-
-    return properties
+    return None if inplace else properties
 
 
 def _is_to_be_removed_from_deep_filter_properties_iterable(
@@ -1416,17 +1402,14 @@ def _is_to_be_removed_from_deep_filter_properties_iterable(
     conditions: Tuple[bool, ...] = (
         clean_nulls and value is None,
         not keep_falsy_numerics and is_numeric(value) and value == 0,
-        clean_falsy and not (is_numeric(value) or value),
+        clean_falsy and not is_numeric(value) and not value,
     )
-    return any(condition for condition in conditions)
+    return any(conditions)
 
 
 def is_truthy(value: Any) -> bool:
     try:
-        if value:
-            return True
-        else:
-            return False
+        return bool(value)
     except ValueError:
         return False
 
@@ -1860,8 +1843,7 @@ def get_context(
     """
     project_config = _prepare_project_config(project_config)
 
-    # First, check for GX Cloud conditions
-    cloud_context = _get_cloud_context(
+    if cloud_context := _get_cloud_context(
         project_config=project_config,
         context_root_dir=context_root_dir,
         runtime_environment=runtime_environment,
@@ -1873,17 +1855,14 @@ def get_context(
         ge_cloud_base_url=ge_cloud_base_url,
         ge_cloud_access_token=ge_cloud_access_token,
         ge_cloud_organization_id=ge_cloud_organization_id,
-    )
-    if cloud_context:
+    ):
         return cloud_context
 
-    # Second, check for a context_root_dir to determine if using a filesystem
-    file_context = _get_file_context(
+    if file_context := _get_file_context(
         project_config=project_config,
         context_root_dir=context_root_dir,
         runtime_environment=runtime_environment,
-    )
-    if file_context:
+    ):
         return file_context
 
     # Finally, default to ephemeral
@@ -2078,12 +2057,11 @@ def generate_temporary_table_name(
 
 
 def get_sqlalchemy_inspector(engine):
-    if version.parse(sa.__version__) < version.parse("1.4"):
-        # Inspector.from_engine deprecated since 1.4, sa.inspect() should be used instead
-        insp = sqlalchemy.reflection.Inspector.from_engine(engine)
-    else:
-        insp = sa.inspect(engine)
-    return insp
+    return (
+        sqlalchemy.reflection.Inspector.from_engine(engine)
+        if version.parse(sa.__version__) < version.parse("1.4")
+        else sa.inspect(engine)
+    )
 
 
 def get_sqlalchemy_url(drivername, **credentials):
@@ -2155,23 +2133,18 @@ def import_make_url():
 def get_pyathena_potential_type(type_module, type_) -> str:
     if version.parse(type_module.pyathena.__version__) >= version.parse("2.5.0"):
         # introduction of new column type mapping in 2.5
-        potential_type = type_module.AthenaDialect()._get_column_type(type_)
-    else:
-        if type_ == "string":
-            type_ = "varchar"
+        return type_module.AthenaDialect()._get_column_type(type_)
+    if type_ == "string":
+        type_ = "varchar"
         # < 2.5 column type mapping
-        potential_type = type_module._TYPE_MAPPINGS.get(type_)
-
-    return potential_type
+    return type_module._TYPE_MAPPINGS.get(type_)
 
 
 def get_trino_potential_type(type_module: ModuleType, type_: str) -> object:
     """
     Leverage on Trino Package to return sqlalchemy sql type
     """
-    # noinspection PyUnresolvedReferences
-    potential_type = type_module.parse_sqltype(type_)
-    return potential_type
+    return type_module.parse_sqltype(type_)
 
 
 def pandas_series_between_inclusive(
@@ -2181,9 +2154,8 @@ def pandas_series_between_inclusive(
     As of Pandas 1.3.0, the 'inclusive' arg in between() is an enum: {"left", "right", "neither", "both"}
     """
     metric_series: pd.Series
-    if version.parse(pd.__version__) >= version.parse("1.3.0"):
-        metric_series = series.between(min_value, max_value, inclusive="both")
-    else:
-        metric_series = series.between(min_value, max_value)
-
-    return metric_series
+    return (
+        series.between(min_value, max_value, inclusive="both")
+        if version.parse(pd.__version__) >= version.parse("1.3.0")
+        else series.between(min_value, max_value)
+    )

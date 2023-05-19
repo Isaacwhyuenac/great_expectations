@@ -225,15 +225,13 @@ class GrowthNumericDataAssistant(DataAssistant):
             expect_table_row_count_to_be_between_expectation_configuration_builder,
             expect_table_columns_to_match_set_expectation_configuration_builder,
         ]
-        rule = Rule(
+        return Rule(
             name="table_rule",
             variables=variables,
             domain_builder=table_domain_builder,
             parameter_builders=parameter_builders,
             expectation_configuration_builders=expectation_configuration_builders,
         )
-
-        return rule
 
     @staticmethod
     def _build_numeric_columns_rule() -> Rule:
@@ -541,15 +539,13 @@ class GrowthNumericDataAssistant(DataAssistant):
             expect_column_mean_to_be_between_expectation_configuration_builder,
             expect_column_stdev_to_be_between_expectation_configuration_builder,
         ]
-        rule = Rule(
+        return Rule(
             name="numeric_columns_rule",
             variables=variables,
             domain_builder=numeric_column_type_domain_builder,
             parameter_builders=parameter_builders,
             expectation_configuration_builders=expectation_configuration_builders,
         )
-
-        return rule
 
     @staticmethod
     def _build_categorical_columns_rule() -> Rule:
@@ -668,12 +664,10 @@ class GrowthNumericDataAssistant(DataAssistant):
             expect_column_unique_value_count_to_be_between_expectation_configuration_builder,
             expect_column_proportion_of_unique_values_to_be_between_expectation_configuration_builder,
         ]
-        rule = Rule(
+        return Rule(
             name="categorical_columns_rule",
             variables=variables,
             domain_builder=categorical_column_type_domain_builder,
             parameter_builders=None,
             expectation_configuration_builders=expectation_configuration_builders,
         )
-
-        return rule

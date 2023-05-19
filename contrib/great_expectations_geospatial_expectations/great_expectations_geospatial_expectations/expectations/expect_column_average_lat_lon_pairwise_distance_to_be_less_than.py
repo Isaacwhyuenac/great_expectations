@@ -26,9 +26,7 @@ class ColumnAverageLatLonPairwiseDistance(ColumnAggregateMetricProvider):
         # convert everything to arrays for pairwise distance computation
         column_array = np.array([np.array([point[0], point[1]]) for point in column])
 
-        result = pdist(column_array, cls.haversine_adapted).mean()
-
-        return result
+        return pdist(column_array, cls.haversine_adapted).mean()
 
     @staticmethod
     def haversine_adapted(point_1, point_2):

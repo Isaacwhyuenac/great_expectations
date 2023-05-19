@@ -18,8 +18,7 @@ from great_expectations.expectations.metrics import (
 
 def is_valid_eth_address(addr: str) -> bool:
     try:
-        res = coinaddrvalidator.validate("eth", addr).valid
-        return res
+        return coinaddrvalidator.validate("eth", addr).valid
     except Exception:
         return False
 

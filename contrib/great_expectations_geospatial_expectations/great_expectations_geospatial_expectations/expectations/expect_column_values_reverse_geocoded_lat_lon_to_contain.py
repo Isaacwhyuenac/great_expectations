@@ -190,7 +190,7 @@ class ExpectColumnValuesReverseGeocodedLatLonToContain(ColumnMapExpectation):
     ]:
         runtime_configuration = runtime_configuration or {}
         include_column_name = (
-            False if runtime_configuration.get("include_column_name") is False else True
+            runtime_configuration.get("include_column_name") is not False
         )
         styling = runtime_configuration.get("styling")
         params = substitute_none_for_missing(
@@ -206,14 +206,10 @@ class ExpectColumnValuesReverseGeocodedLatLonToContain(ColumnMapExpectation):
         if params["mostly"] is None:
             template_str = "values must be lat lon and contain $word when reverse geocoded by $provider"
         else:
-            if params["mostly"] is not None:
-                params["mostly_pct"] = num_to_str(
-                    params["mostly"] * 100, precision=15, no_scientific=True
-                )
-                template_str += ", at least $mostly_pct % of the time."
-            else:
-                template_str += "."
-
+            params["mostly_pct"] = num_to_str(
+                params["mostly"] * 100, precision=15, no_scientific=True
+            )
+            template_str += ", at least $mostly_pct % of the time."
         if include_column_name:
             template_str = f"$column {template_str}"
 

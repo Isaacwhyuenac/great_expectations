@@ -27,11 +27,9 @@ class ValidationOperatorAnonymizer(BaseAnonymizer):
         }
         actions_dict: dict = validation_operator_obj.actions
 
-        anonymized_info_dict.update(
-            self._anonymize_object_info(
-                object_=validation_operator_obj,
-                anonymized_info_dict=anonymized_info_dict,
-            )
+        anonymized_info_dict |= self._anonymize_object_info(
+            object_=validation_operator_obj,
+            anonymized_info_dict=anonymized_info_dict,
         )
 
         if actions_dict:

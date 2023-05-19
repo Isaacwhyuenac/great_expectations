@@ -91,11 +91,14 @@ class Anonymizer(BaseAnonymizer):
         return self._get_anonymizer(obj=obj, **kwargs) is not None
 
     def _get_anonymizer(self, obj: object, **kwargs) -> Optional[BaseAnonymizer]:
-        for anonymizer in self._anonymizers.values():
-            if anonymizer.can_handle(obj=obj, **kwargs):
-                return anonymizer
-
-        return None
+        return next(
+            (
+                anonymizer
+                for anonymizer in self._anonymizers.values()
+                if anonymizer.can_handle(obj=obj, **kwargs)
+            ),
+            None,
+        )
 
     def anonymize_init_payload(self, init_payload: Dict[str, Any]) -> Dict[str, Any]:
         anonymized_init_payload: Dict[str, Any] = {}
@@ -109,8 +112,7 @@ class Anonymizer(BaseAnonymizer):
         }
 
         for key, val in init_payload.items():
-            anonymizer_func: Optional[Callable] = anonymizer_funcs.get(key)
-            if anonymizer_func:
+            if anonymizer_func := anonymizer_funcs.get(key):
                 anonymized_key: str = f"anonymized_{key}"
                 anonymized_init_payload[anonymized_key] = anonymizer_func(val)
             else:

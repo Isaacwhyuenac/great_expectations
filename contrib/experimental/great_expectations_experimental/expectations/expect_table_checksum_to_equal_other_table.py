@@ -101,7 +101,7 @@ class TableChecksum(TableMetricProvider):
                 selectable.name, selectcolumns, ignore_columns
             )
         else:
-            logger.error("sql dialect is not supported: " + dialect_name)
+            logger.error(f"sql dialect is not supported: {dialect_name}")
             return 0
 
         if DEBUG:
@@ -140,13 +140,17 @@ class TableChecksum(TableMetricProvider):
 # function to form bigquery query as some function will be different in each dialect.
 def get_bigquery_checksum_query(table_name, selectcolumns, ignore_columns):
     return (
-        "select sum(cast(FARM_FINGERPRINT(concat('', "
-        + ",".join(
-            map(lambda x: " IFNULL(cast(" + x + " as string), '')", selectcolumns)
+        (
+            "select sum(cast(FARM_FINGERPRINT(concat('', "
+            + ",".join(
+                map(
+                    lambda x: f" IFNULL(cast({x} as string), '')",
+                    selectcolumns,
+                )
+            )
         )
         + "))as NUMERIC)) as cksum from "
-        + str(table_name)
-    )
+    ) + str(table_name)
 
 
 # function to form sqlite query as some functions will be different in each dialect.
@@ -157,13 +161,17 @@ def get_sqlite_checksum_query(table_name, selectcolumns, ignore_columns):
     )
     # checksum or similar hashing function is not there in sqlite so using length function for testing purposes.
     return (
-        "select sum(length('' || "
-        + " || ".join(
-            map(lambda x: "coalesce(cast(" + x + " as varchar), '')", selectcolumns)
+        (
+            "select sum(length('' || "
+            + " || ".join(
+                map(
+                    lambda x: f"coalesce(cast({x} as varchar), '')",
+                    selectcolumns,
+                )
+            )
         )
         + ")) as hash from "
-        + str(table_name)
-    )
+    ) + str(table_name)
     # + ')'
 
 
@@ -467,10 +475,8 @@ class ExpectTableChecksumToEqualOtherTable(BatchExpectation):
 
             if "ignore_columns" in configuration.kwargs:
                 pattern = re.compile(r"^(\w+)(,\s*\w+)*$")
-                assert (
-                    True
-                    if (pattern.match(configuration.kwargs["ignore_columns"]))
-                    else False
+                assert bool(
+                    (pattern.match(configuration.kwargs["ignore_columns"]))
                 ), "ignore_columns input is not valid. Please provide comma seperated columns list"
         except AssertionError as e:
             raise InvalidExpectationConfigurationError(str(e))

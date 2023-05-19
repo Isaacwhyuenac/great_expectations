@@ -1200,8 +1200,7 @@ class ExpectationConfiguration(SerializableDictDot):
             key: self.kwargs.get(key, default_kwarg_values.get(key))
             for key in domain_keys
         }
-        missing_kwargs = set(domain_keys) - set(domain_kwargs.keys())
-        if missing_kwargs:
+        if missing_kwargs := set(domain_keys) - set(domain_kwargs.keys()):
             raise InvalidExpectationKwargsError(
                 f"Missing domain kwargs: {list(missing_kwargs)}"
             )
@@ -1244,7 +1243,7 @@ class ExpectationConfiguration(SerializableDictDot):
             key: self.kwargs.get(key, default_kwarg_values.get(key))
             for key in success_keys
         }
-        success_kwargs.update(domain_kwargs)
+        success_kwargs |= domain_kwargs
 
         return success_kwargs
 
@@ -1283,7 +1282,7 @@ class ExpectationConfiguration(SerializableDictDot):
         runtime_kwargs["result_format"] = parse_result_format(
             runtime_kwargs["result_format"]
         )
-        runtime_kwargs.update(success_kwargs)
+        runtime_kwargs |= success_kwargs
 
         return runtime_kwargs
 
@@ -1291,8 +1290,8 @@ class ExpectationConfiguration(SerializableDictDot):
         self, other_expectation_configuration: ExpectationConfiguration
     ) -> bool:
         if (
-            not self.expectation_type
-            == other_expectation_configuration.expectation_type
+            self.expectation_type
+            != other_expectation_configuration.expectation_type
         ):
             return False
         return (
@@ -1308,20 +1307,19 @@ class ExpectationConfiguration(SerializableDictDot):
     ) -> bool:
         """ExpectationConfiguration equivalence does not include meta, and relies on *equivalence* of kwargs."""
         if not isinstance(other, self.__class__):
-            if isinstance(other, dict):
-                try:
-                    # noinspection PyNoneFunctionAssignment
-                    other = expectationConfigurationSchema.load(other)
-                except ValidationError:
-                    logger.debug(
-                        "Unable to evaluate equivalence of ExpectationConfiguration object with dict because "
-                        "dict other could not be instantiated as an ExpectationConfiguration"
-                    )
-                    return NotImplemented
-            else:
+            if not isinstance(other, dict):
                 # Delegate comparison to the other instance
                 return NotImplemented
 
+            try:
+                # noinspection PyNoneFunctionAssignment
+                other = expectationConfigurationSchema.load(other)
+            except ValidationError:
+                logger.debug(
+                    "Unable to evaluate equivalence of ExpectationConfiguration object with dict because "
+                    "dict other could not be instantiated as an ExpectationConfiguration"
+                )
+                return NotImplemented
         if match_type == "domain":
             return all(
                 (
@@ -1417,9 +1415,7 @@ class ExpectationConfiguration(SerializableDictDot):
                 continue
 
             # Query stores do not have "expectation_suite_name"
-            if urn["urn_type"] == "stores" and "expectation_suite_name" not in urn:
-                pass
-            else:
+            if urn["urn_type"] != "stores" or "expectation_suite_name" in urn:
                 self._update_dependencies_with_expectation_suite_urn(dependencies, urn)
 
         dependencies = _deduplicate_evaluation_parameter_dependencies(dependencies)
@@ -1520,19 +1516,18 @@ class ExpectationConfiguration(SerializableDictDot):
             "render_object": self,
         }
         module_name = "great_expectations.render.renderer.inline_renderer"
-        inline_renderer = instantiate_class_from_config(
+        if inline_renderer := instantiate_class_from_config(
             config=inline_renderer_config,
             runtime_environment={},
             config_defaults={"module_name": module_name},
-        )
-        if not inline_renderer:
+        ):
+            self.rendered_content = inline_renderer.get_rendered_content()
+        else:
             raise ClassInstantiationError(
                 module_name=module_name,
                 package_name=None,
                 class_name=inline_renderer_config["class_name"],
             )
-
-        self.rendered_content = inline_renderer.get_rendered_content()
 
 
 class ExpectationConfigurationSchema(Schema):
@@ -1577,8 +1572,7 @@ class ExpectationConfigurationSchema(Schema):
         Utilize UUID for data validation but convert to string before usage in business logic
         """
         attr = "ge_cloud_id"
-        uuid_val = data.get(attr)
-        if uuid_val:
+        if uuid_val := data.get(attr):
             data[attr] = str(uuid_val)
         return data
 

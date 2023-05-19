@@ -106,15 +106,15 @@ def _checkpoint_new(ctx: click.Context, checkpoint_name: str, jupyter: bool) -> 
     ) > 0
 
     try:
-        if has_fluent_datasource and not has_block_datasource:
-            toolkit.exit_with_failure_message_and_stats(
-                data_context=context,
-                usage_event=usage_event_end,
-                message=f"<red>{CHECKPOINT_NEW_FLUENT_DATASOURCES_ONLY}</red>",
-            )
-            return
+        if has_fluent_datasource:
+            if not has_block_datasource:
+                toolkit.exit_with_failure_message_and_stats(
+                    data_context=context,
+                    usage_event=usage_event_end,
+                    message=f"<red>{CHECKPOINT_NEW_FLUENT_DATASOURCES_ONLY}</red>",
+                )
+                return
 
-        if has_fluent_datasource and has_block_datasource:
             cli_message(
                 f"<yellow>{CHECKPOINT_NEW_FLUENT_DATASOURCES_AND_BLOCK_DATASOURCES}</yellow>"
             )
@@ -311,7 +311,7 @@ def print_validation_operator_results_details(
             status_slug = "<red>✖ Failed</red>"
         suite_name: str = str(vr.meta["expectation_suite_name"])  # type: ignore[union-attr]
         if len(suite_name) > max_suite_display_width:
-            suite_name = suite_name[0:max_suite_display_width]
+            suite_name = suite_name[:max_suite_display_width]
             suite_name = f"{suite_name[:-1]}…"
         status_line: str = f"- {suite_name.ljust(max_suite_display_width)}   {status_slug}   {stats_slug}"
         cli_message(status_line)

@@ -178,7 +178,7 @@ class ExpectColumnDistinctValuesToBeContinuous(ColumnAggregateExpectation):
                 params["row_condition"], with_schema=True
             )
             template_str = f"{conditional_template_str}, then {template_str}"
-            params_with_json_schema.update(conditional_params)
+            params_with_json_schema |= conditional_params
 
         params_with_json_schema = add_values_with_json_schema_from_list_in_params(
             params=params, params_with_json_schema=params_with_json_schema
@@ -245,8 +245,7 @@ class ExpectColumnDistinctValuesToBeContinuous(ColumnAggregateExpectation):
         end_value: Any,
         configuration: ExpectationConfiguration,
     ):
-        datetime_format = configuration.kwargs.get("datetime_format")
-        if datetime_format:
+        if datetime_format := configuration.kwargs.get("datetime_format"):
             try:
                 # user defined datetime_format, so we're expecting to handle dates
                 start_date = datetime.strptime(start_value, datetime_format)
@@ -260,7 +259,7 @@ class ExpectColumnDistinctValuesToBeContinuous(ColumnAggregateExpectation):
                     f"Expecting datetime when datetime_format is set\n{ex}"
                 )
         # else - no datetime format, so we're assuming integers
-        return [x for x in range(start_value, end_value + 1)]
+        return list(range(start_value, end_value + 1))
 
     def _validate(
         self,

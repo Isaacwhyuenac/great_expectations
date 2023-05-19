@@ -79,11 +79,11 @@ def perform_check(suppress_output: bool) -> bool:
         ),
     ]
 
-    successes = 0
-    for command in commands:
-        if run_command(command, suppress_output=suppress_output):
-            successes += 1
-
+    successes = sum(
+        1
+        for command in commands
+        if run_command(command, suppress_output=suppress_output)
+    )
     is_successful = successes == len(commands)
     color = "green" if is_successful else "red"
     echo(

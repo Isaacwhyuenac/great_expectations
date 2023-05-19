@@ -153,9 +153,6 @@ class BatchRequestAnonymizer(BaseAnonymizer):
                     destination["data_connector_query_keys"].append(key)
                 elif key in RUNTIME_PARAMETERS_KEYS:
                     destination["runtime_parameters_keys"].append(key)
-                else:
-                    pass
-
                 self._build_anonymized_batch_request(
                     destination=destination, source=value
                 )
@@ -174,8 +171,4 @@ class BatchRequestAnonymizer(BaseAnonymizer):
         attrs: Set[str] = BatchRequest.include_field_names.union(
             RuntimeBatchRequest.include_field_names
         )
-        for kwarg in kwargs:
-            if kwarg in attrs or kwarg == "batch_request":
-                return True
-
-        return False
+        return any(kwarg in attrs or kwarg == "batch_request" for kwarg in kwargs)

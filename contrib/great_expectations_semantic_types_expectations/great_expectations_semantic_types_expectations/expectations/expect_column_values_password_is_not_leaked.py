@@ -19,10 +19,7 @@ from great_expectations.expectations.metrics import (
 def is_password_not_leaked(psw: str) -> bool:
     try:
         res = pwnedpasswords.check(psw)
-        if res > 1:
-            return False
-        else:
-            return True
+        return res <= 1
     except Exception:
         return False
 

@@ -28,24 +28,22 @@ class ColumnValuesGeometryIntersectsShape(ColumnMapMetricProvider):
         shape_format = kwargs.get("shape_format")
         column_shape_format = kwargs.get("column_shape_format")
 
-        # Check that shape is given and given in the correct format
-        if shape is not None:
-            try:
-                if shape_format == "wkt":
-                    shape_ref = geos.from_wkt(shape)
-                elif shape_format == "wkb":
-                    shape_ref = geos.from_wkb(shape)
-                elif shape_format == "geojson":
-                    shape_ref = geos.from_geojson(shape)
-                else:
-                    raise NotImplementedError(
-                        "Shape constructor method not implemented. Must be in WKT, WKB, or GeoJSON format."
-                    )
-            except Exception:
-                raise Exception("A valid reference shape was not given.")
-        else:
+        if shape is None:
             raise Exception("A shape must be provided for this method.")
 
+        try:
+            if shape_format == "wkt":
+                shape_ref = geos.from_wkt(shape)
+            elif shape_format == "wkb":
+                shape_ref = geos.from_wkb(shape)
+            elif shape_format == "geojson":
+                shape_ref = geos.from_geojson(shape)
+            else:
+                raise NotImplementedError(
+                    "Shape constructor method not implemented. Must be in WKT, WKB, or GeoJSON format."
+                )
+        except Exception:
+            raise Exception("A valid reference shape was not given.")
         # Load the column into a pygeos Geometry vector from numpy array (Series not supported).
         if column_shape_format == "wkt":
             shape_test = geos.from_wkt(column.to_numpy(), on_invalid="ignore")

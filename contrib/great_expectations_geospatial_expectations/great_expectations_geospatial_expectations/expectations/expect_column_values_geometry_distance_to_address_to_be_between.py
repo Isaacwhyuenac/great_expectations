@@ -56,21 +56,19 @@ class ColumnValuesGeometryDistanceToAddress(ColumnMapMetricProvider):
                 "The geocoder is not implemented for this method."
             )
 
-        # find the reference shape with the geocoder.
-        if geocoder is not None:
-            try:
-                # Specify the default parameters for Nominatim and run query. User is responsible for config and query params otherwise.
-                query_params = dict(exactly_one=True, geometry="wkt")
-                location = cls.geocode(geocoder, geocoder_config, place, query_params)
-            except Exception:
-                raise Exception(
-                    "Geocoding configuration and query failed to produce a valid result."
-                )
-        else:
+        if geocoder is None:
             raise Exception(
                 "A valid geocoder must be provided for this method. See GeoPy for reference."
             )
 
+        try:
+            # Specify the default parameters for Nominatim and run query. User is responsible for config and query params otherwise.
+            query_params = dict(exactly_one=True, geometry="wkt")
+            location = cls.geocode(geocoder, geocoder_config, place, query_params)
+        except Exception:
+            raise Exception(
+                "Geocoding configuration and query failed to produce a valid result."
+            )
         # Load the column into a pygeos Geometry vector from numpy array (Series not supported).
         if column_shape_format == "wkt":
             shape_test = geos.from_wkt(column.to_numpy(), on_invalid="ignore")
@@ -114,17 +112,9 @@ class ColumnValuesGeometryDistanceToAddress(ColumnMapMetricProvider):
 
         # Evaluate the between statement (from column_values_between.py)
         if min_value is None:
-            if strict_max:
-                return column_dist < max_value
-            else:
-                return column_dist <= max_value
-
+            return column_dist < max_value if strict_max else column_dist <= max_value
         elif max_value is None:
-            if strict_min:
-                return min_value < column_dist
-            else:
-                return min_value <= column_dist
-
+            return min_value < column_dist if strict_min else min_value <= column_dist
         else:
             if strict_min and strict_max:
                 return (min_value < column_dist) & (column_dist < max_value)
@@ -139,8 +129,7 @@ class ColumnValuesGeometryDistanceToAddress(ColumnMapMetricProvider):
     def geocode(geocoder, config, query, query_config):
         cls = geocoders.get_geocoder_for_service(geocoder)
         geolocator = cls(**config)
-        location = geolocator.geocode(query, **query_config)
-        return location
+        return geolocator.geocode(query, **query_config)
 
     # #This method defines the business logic for evaluating your metric when using a SqlAlchemyExecutionEngine
     # @column_condition_partial(engine=SqlAlchemyExecutionEngine)

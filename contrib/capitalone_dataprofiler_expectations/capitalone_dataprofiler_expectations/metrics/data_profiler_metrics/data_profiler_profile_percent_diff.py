@@ -65,10 +65,7 @@ class DataProfilerProfilePercentDiff(DataProfilerProfileMetricProvider):
                     continue
                 pr_val = pr_stats[dr_stat]
                 percent_change = 0
-                if pr_val == 0:
-                    percent_change = "ERR_divide_by_zero"  # Div by 0 error
-                else:
-                    percent_change = dr_val / pr_val
+                percent_change = "ERR_divide_by_zero" if pr_val == 0 else dr_val / pr_val
                 percent_delta_stats[dr_stat] = percent_change
             percent_delta_col["statistics"] = percent_delta_stats
             percent_delta_data_stats.append(percent_delta_col)

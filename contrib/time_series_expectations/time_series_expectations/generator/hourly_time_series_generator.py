@@ -21,11 +21,9 @@ class HourlyTimeSeriesGenerator(DailyTimeSeriesGenerator):
         """Generate an annual seasonality component for a time series."""
 
         return sum(
-            [
-                alpha * np.cos(2 * np.pi * (i + 1) * time_range / 24)
-                + beta * np.sin(2 * np.pi * (i + 1) * time_range / 24)
-                for i, (alpha, beta) in enumerate(hourly_seasonality_params)
-            ]
+            alpha * np.cos(2 * np.pi * (i + 1) * time_range / 24)
+            + beta * np.sin(2 * np.pi * (i + 1) * time_range / 24)
+            for i, (alpha, beta) in enumerate(hourly_seasonality_params)
         )
 
     def _generate_hourly_time_series(
@@ -48,7 +46,7 @@ class HourlyTimeSeriesGenerator(DailyTimeSeriesGenerator):
                     np.random.normal() / 100,
                     np.random.normal() / 100,
                 )
-                for i in range(4)
+                for _ in range(4)
             ]
 
         time_range = np.arange(size)

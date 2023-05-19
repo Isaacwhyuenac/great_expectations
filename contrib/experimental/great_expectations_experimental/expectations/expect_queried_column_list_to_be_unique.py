@@ -66,21 +66,20 @@ class ExpectQueriedColumnListToBeUnique(QueryExpectation):
         execution_engine: ExecutionEngine = None,
     ) -> Union[ExpectationValidationResult, dict]:
         metrics = convert_to_json_serializable(data=metrics)
-        num_of_duplicates = list(metrics.get("query.template_values")[0].values())[0]
-
-        if not num_of_duplicates:
-            return {
-                "info": "The columns are unique - no duplicates found",
-                "success": True,
-            }
-
-        else:
+        if num_of_duplicates := list(
+            metrics.get("query.template_values")[0].values()
+        )[0]:
             return {
                 "success": False,
                 "result": {
                     "info": f"{num_of_duplicates} Duplicated keys found",
                     "observed_value": num_of_duplicates,
                 },
+            }
+        else:
+            return {
+                "info": "The columns are unique - no duplicates found",
+                "success": True,
             }
 
     examples = [

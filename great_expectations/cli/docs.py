@@ -72,11 +72,7 @@ def docs_build(
             usage_event=usage_event_end,
             message=f"<red>The specified site name `{site_name}` does not exist in this project.</red>",
         )
-    if site_name is None:
-        sites_to_build = context.get_site_names()
-    else:
-        sites_to_build = [site_name]
-
+    sites_to_build = context.get_site_names() if site_name is None else [site_name]
     build_docs(
         context,
         usage_stats_event=usage_event_end,
@@ -95,8 +91,8 @@ def docs_build(
 @click.pass_context
 def docs_list(ctx: click.Context):
     """List known Data Docs sites."""
-    context = ctx.obj.data_context
     usage_event_end: str = ctx.obj.usage_event_end
+    context = ctx.obj.data_context
     docs_sites_url_dicts = context.get_docs_sites_urls()
 
     try:
@@ -104,12 +100,7 @@ def docs_list(ctx: click.Context):
             cli_message("No Data Docs sites found")
         else:
             docs_sites_strings = [
-                " - <cyan>{}</cyan>: {}".format(
-                    docs_site_dict["site_name"],
-                    docs_site_dict.get("site_url")
-                    or f"site configured but does not exist. Run the following command to build site: great_expectations "
-                    f'docs build --site-name {docs_site_dict["site_name"]}',
-                )
+                f""" - <cyan>{docs_site_dict["site_name"]}</cyan>: {docs_site_dict.get("site_url") or f'site configured but does not exist. Run the following command to build site: great_expectations docs build --site-name {docs_site_dict["site_name"]}'}"""
                 for docs_site_dict in docs_sites_url_dicts
             ]
             list_intro_string = _build_intro_string(docs_sites_strings)
@@ -154,7 +145,7 @@ def docs_clean(
     context = ctx.obj.data_context
     usage_event_end: str = ctx.obj.usage_event_end
 
-    if (site_name is None and all_sites is False) or (site_name and all_sites):
+    if site_name is None and not all_sites or (site_name and all_sites):
         toolkit.exit_with_failure_message_and_stats(
             data_context=context,
             usage_event=usage_event_end,

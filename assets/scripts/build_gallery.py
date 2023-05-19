@@ -221,14 +221,10 @@ def get_expectations_info_dict(
 
         exp_type_set = set()
         for line in re.split("\r?\n", text):
-            match = rx.match(line)
-            if match:
+            if match := rx.match(line):
                 if not line.strip().startswith("#"):
-                    exp_type_set.add(match.group(1))
-        if file_path.startswith("great_expectations"):
-            _prefix = "Core "
-        else:
-            _prefix = "Contrib "
+                    exp_type_set.add(match[1])
+        _prefix = "Core " if file_path.startswith("great_expectations") else "Contrib "
         result[expectation_name]["exp_type"] = _prefix + sorted(exp_type_set)[0]
         logger.debug(
             f"Expectation type {_prefix}{sorted(exp_type_set)[0]} for {expectation_name} in {file_path}"
@@ -248,7 +244,7 @@ def install_necessary_requirements(requirements) -> list:
     installed = []
     for req in parsed_requirements:
         is_satisfied = any(
-            [installed_pkg in req for installed_pkg in installed_packages]
+            installed_pkg in req for installed_pkg in installed_packages
         )
         if not is_satisfied:
             logger.debug(f"Executing command: 'pip install \"{req}\"'")
@@ -263,7 +259,7 @@ def uninstall_requirements(requirements):
     """Uninstall any requirements that were added to the venv"""
     print("\n\n\n=== (Uninstalling) ===")
     logger.info(
-        f"Uninstalling packages that were installed while running this script..."
+        "Uninstalling packages that were installed while running this script..."
     )
     for req in requirements:
         logger.debug(f"Executing command: 'pip uninstall -y \"{req}\"'")
@@ -282,11 +278,12 @@ def get_expectation_instances(expectations_info):
         sys_path = expectations_info[expectation_name]["sys_path"]
         if sys_path and sys_path not in sys.path:
             sys.path.append(sys_path)
-        import_module_args = expectations_info[expectation_name]["import_module_args"]
-        if import_module_args:
+        if import_module_args := expectations_info[expectation_name][
+            "import_module_args"
+        ]:
             try:
                 importlib.import_module(*import_module_args)
-            except (ModuleNotFoundError, ImportError, Exception) as e:
+            except Exception as e:
                 logger.error(f"Failed to load expectation_name: {expectation_name}")
                 print(traceback.format_exc())
                 expectation_tracebacks.write(
@@ -603,7 +600,6 @@ def format_docstring_to_markdown(docstr: str) -> str:
             in_code_block = True
             clean_docstr_list.append("```")
 
-        # All of our parameter/arg/etc lists start after a line ending in ':'.
         elif line.strip().endswith(":"):
             in_param = True
             # This adds a blank line before the header if one doesn't already exist.
@@ -622,29 +618,22 @@ def format_docstring_to_markdown(docstr: str) -> str:
             in_code_block = False
             first_code_indentation = None
             clean_docstr_list.append(line)
-        else:
-            if in_code_block:
+        elif in_code_block:
                 # Determine the number of spaces indenting the first line of code so they can be removed from all lines
                 # in the code block without wrecking the hierarchical indentation levels of future lines.
-                if first_code_indentation == None and line.strip() != "":
-                    first_code_indentation = len(
-                        re.match(r"\s*", original_line, re.UNICODE).group(0)
-                    )
-                if line.strip() == "" and prev_line == "::":
-                    # If the first line of the code block is a blank one, just skip it.
-                    pass
-                else:
-                    # Append the line of code, minus the extra indentation from being written in an indented docstring.
-                    clean_docstr_list.append(original_line[first_code_indentation:])
-            elif ":" in line.replace(":ref:", "") and in_param:
-                # This indicates a parameter. arg. or other definition.
-                clean_docstr_list.append(f"- {line.strip()}")
-            else:
-                # This indicates a regular line of text.
-                clean_docstr_list.append(f"{line.strip()}")
+            if first_code_indentation is None and line.strip() != "":
+                first_code_indentation = len(re.match(r"\s*", original_line, re.UNICODE)[0])
+            if line.strip() != "" or prev_line != "::":
+                # Append the line of code, minus the extra indentation from being written in an indented docstring.
+                clean_docstr_list.append(original_line[first_code_indentation:])
+        elif ":" in line.replace(":ref:", "") and in_param:
+            # This indicates a parameter. arg. or other definition.
+            clean_docstr_list.append(f"- {line.strip()}")
+        else:
+            # This indicates a regular line of text.
+            clean_docstr_list.append(f"{line.strip()}")
         prev_line = line.strip()
-    clean_docstr = "\n".join(clean_docstr_list)
-    return clean_docstr
+    return "\n".join(clean_docstr_list)
 
 
 def _disable_progress_bars() -> Tuple[str, DataContext]:

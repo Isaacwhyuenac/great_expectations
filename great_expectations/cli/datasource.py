@@ -147,7 +147,7 @@ def delete_datasource(ctx: click.Context, datasource: str) -> None:
     try:
         context.get_datasource(datasource)
     except ValueError:
-        cli_message("<green>{}</green>".format("Datasource deleted successfully."))
+        cli_message('<green>Datasource deleted successfully.</green>')
         send_usage_message(
             data_context=context,
             event=usage_event_end,
@@ -246,7 +246,7 @@ What data would you like Great Expectations to connect to?
         return None
     helper.prompt()
     notebook_path = helper.create_notebook(context)
-    if jupyter is False:
+    if not jupyter:
         cli_message(
             f"To continue editing this Datasource, run <green>jupyter notebook {notebook_path}</green>"
         )
@@ -723,12 +723,11 @@ schema_name = ""  # or dataset name
 table_name = ""'''
 
     def verify_libraries_installed(self) -> bool:
-        sqlalchemy_bigquery_ok = verify_library_dependent_modules(
+        return verify_library_dependent_modules(
             python_import_name="sqlalchemy_bigquery",
             pip_library_name="sqlalchemy_bigquery",
             module_names_to_reload=CLI_ONLY_SQLALCHEMY_ORDERED_DEPENDENCY_MODULE_NAMES,
         )
-        return sqlalchemy_bigquery_ok
 
     def _yaml_innards(self) -> str:
         return "\n  connection_string: {connection_string}"
@@ -867,7 +866,7 @@ def _get_sql_yaml_helper_class(
 
 
 def _prompt_for_execution_engine() -> str:
-    selection = str(
+    return str(
         click.prompt(
             """
 What are you processing your files with?
@@ -878,7 +877,6 @@ What are you processing your files with?
             show_choices=False,
         )
     )
-    return selection
 
 
 def _get_files_helper(
@@ -913,8 +911,7 @@ Which database backend are you using?
         )
         - 1
     )  # don't show user a zero index list :)
-    selected_database = list(SupportedDatabaseBackends)[selected_database_index]
-    return selected_database
+    return list(SupportedDatabaseBackends)[selected_database_index]
 
 
 def _prompt_for_snowflake_auth_method() -> SnowflakeAuthMethod:

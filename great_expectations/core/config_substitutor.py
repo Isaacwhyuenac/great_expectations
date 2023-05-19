@@ -69,7 +69,7 @@ class _ConfigurationSubstitutor:
         if isinstance(data, BaseYamlConfig):
             data = (data.__class__.get_schema_class())().dump(data)
 
-        if isinstance(data, dict) or isinstance(data, OrderedDict):
+        if isinstance(data, (dict, OrderedDict)):
             return {
                 k: self.substitute_all_config_variables(v, replace_variables_dict)
                 for k, v in data.items()
@@ -131,11 +131,7 @@ class _ConfigurationSubstitutor:
             config_variable_name = m.group(1) or m.group(2)
             config_variable_value = config_variables_dict.get(config_variable_name)
 
-            if config_variable_value is not None:
-                if not isinstance(config_variable_value, str):
-                    return config_variable_value
-                template_str = template_str.replace(m.group(), config_variable_value)
-            else:
+            if config_variable_value is None:
                 raise gx_exceptions.MissingConfigVariableError(
                     f"""\n\nUnable to find a match for config substitution variable: `{config_variable_name}`.
     Please add this missing variable to your `uncommitted/config_variables.yml` file or your environment variables.
@@ -143,6 +139,9 @@ class _ConfigurationSubstitutor:
                     missing_config_variable=config_variable_name,
                 )
 
+            if not isinstance(config_variable_value, str):
+                return config_variable_value
+            template_str = template_str.replace(m.group(), config_variable_value)
         # 2. Replace the "$"'s that had been escaped
         template_str = template_str.replace(dollar_sign_escape_string, "$")
         template_str = self._substitute_value_from_secret_store(template_str)
@@ -207,7 +206,7 @@ class _ConfigurationSubstitutor:
         :raises: ImportError, ValueError
         """
         regex = re.compile(
-            rf"{self.AWS_PATTERN}(?:\:([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}))?(?:\|([^\|]+))?$"
+            f"{self.AWS_PATTERN}(?:\:([a-f0-9]8-[a-f0-9]4-[a-f0-9]4-[a-f0-9]4-[a-f0-9]12))?(?:\|([^\|]+))?$"
         )
         if not boto3:
             logger.error(
@@ -221,10 +220,10 @@ class _ConfigurationSubstitutor:
         if not matches:
             raise ValueError(f"Could not match the value with regex {regex}")
 
-        region_name = matches.group(1)
-        secret_name = matches.group(3)
-        secret_version = matches.group(4)
-        secret_key = matches.group(5)
+        region_name = matches[1]
+        secret_name = matches[3]
+        secret_version = matches[4]
+        secret_key = matches[5]
 
         # Create a Secrets Manager client
         session = boto3.session.Session()
@@ -283,10 +282,10 @@ class _ConfigurationSubstitutor:
         if not matches:
             raise ValueError(f"Could not match the value with regex {regex}")
 
-        project_id = matches.group(1)
-        secret_id = matches.group(2)
-        secret_version = matches.group(3)
-        secret_key = matches.group(4)
+        project_id = matches[1]
+        secret_id = matches[2]
+        secret_version = matches[3]
+        secret_key = matches[4]
         if not secret_version:
             secret_version = "latest"
         name = f"projects/{project_id}/secrets/{secret_id}/versions/{secret_version}"
@@ -324,9 +323,7 @@ class _ConfigurationSubstitutor:
         :return: a string with the value substituted by the secret from the Azure Key Vault store
         :raises: ImportError, ValueError
         """
-        regex = re.compile(
-            rf"{self.AZURE_PATTERN}(?:\/([a-f0-9]{32}))?(?:\|([^\|]+))?$"
-        )
+        regex = re.compile(f"{self.AZURE_PATTERN}(?:\/([a-f0-9]32))?(?:\|([^\|]+))?$")
         if not azure.SecretClient:
             logger.error(
                 "SecretClient is not installed, please install great_expectations with azure_secrets extra > "
@@ -340,10 +337,10 @@ class _ConfigurationSubstitutor:
         if not matches:
             raise ValueError(f"Could not match the value with regex {regex}")
 
-        keyvault_uri = matches.group(1)
-        secret_name = matches.group(2)
-        secret_version = matches.group(3)
-        secret_key = matches.group(4)
+        keyvault_uri = matches[1]
+        secret_name = matches[2]
+        secret_version = matches[3]
+        secret_key = matches[4]
         credential = azure.DefaultAzureCredential()
         client = azure.SecretClient(vault_url=keyvault_uri, credential=credential)
         secret = client.get_secret(name=secret_name, version=secret_version).value

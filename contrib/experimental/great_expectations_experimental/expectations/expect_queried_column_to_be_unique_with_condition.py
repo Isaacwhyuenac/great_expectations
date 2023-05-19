@@ -68,21 +68,18 @@ class ExpectQueriedColumnToBeUniqueWithCondition(QueryExpectation):
         runtime_configuration: dict = None,
         execution_engine: ExecutionEngine = None,
     ) -> Union[ExpectationValidationResult, dict]:
-        query_result = metrics.get("query.template_values")
-
-        if not query_result:
-            return {
-                "info": "The column values are unique, under the condition",
-                "success": True,
-            }
-
-        else:
+        if query_result := metrics.get("query.template_values"):
             return {
                 "success": False,
                 "result": {
                     "info": "The column values are not unique, under the condition",
                     "observed_value": query_result[:10],
                 },
+            }
+        else:
+            return {
+                "info": "The column values are unique, under the condition",
+                "success": True,
             }
 
     examples = [

@@ -73,9 +73,7 @@ class TableEvaluateBinaryLabelModelBias(TableMetricProvider):
             bdf = b.get_disparity_major_group(xtab, original_df=df)
         f = Fairness()
         fdf = f.get_group_value_fairness(bdf)
-        # gaf = f.get_group_attribute_fairness(fdf) #this produces cool chart that would be nice to display
-        gof = f.get_overall_fairness(fdf)
-        return gof
+        return f.get_overall_fairness(fdf)
 
     @classmethod
     def _get_evaluation_dependencies(
@@ -257,8 +255,7 @@ class ExpectTableBinaryLabelModelBias(BatchExpectation):
     ):
 
         fairness = metrics["table.modeling.binary.model_bias"]
-        partial_success = configuration["kwargs"].get("partial_success")
-        if partial_success:
+        if partial_success := configuration["kwargs"].get("partial_success"):
             return {
                 "success": True in fairness.values(),
                 "result": {"observed_value": fairness},

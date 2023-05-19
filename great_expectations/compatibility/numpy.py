@@ -20,19 +20,18 @@ def numpy_quantile(
     Source: https://numpy.org/doc/stable/reference/generated/numpy.quantile.html
     """
     quantile: npt.NDArray
-    if version.parse(np.__version__) >= version.parse("1.22.0"):
-        quantile = np.quantile(  # type: ignore[call-overload]
+    return (
+        np.quantile(  # type: ignore[call-overload]
             a=a,
             q=q,
             axis=axis,
             method=method,
         )
-    else:
-        quantile = np.quantile(  # type: ignore[call-overload]
+        if version.parse(np.__version__) >= version.parse("1.22.0")
+        else np.quantile(  # type: ignore[call-overload]
             a=a,
             q=q,
             axis=axis,
             interpolation=method,
         )
-
-    return quantile
+    )

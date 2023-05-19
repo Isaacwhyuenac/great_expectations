@@ -26,7 +26,7 @@ class ColumnValuesValidWikipediaArticles(ColumnMapMetricProvider):
     @column_condition_partial(engine=PandasExecutionEngine)
     def _pandas(cls, column, **kwargs):
         def is_valid_wikipedia_article(title):
-            url = "https://en.wikipedia.org/wiki/" + title
+            url = f"https://en.wikipedia.org/wiki/{title}"
             try:
                 r = requests.head(url)
                 # print(r.status_code)

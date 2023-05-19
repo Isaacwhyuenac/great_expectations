@@ -15,7 +15,7 @@ from great_expectations.expectations.metrics import (
 
 
 def is_valid_http_method(http_method: str) -> bool:
-    return http_method.lower() in [
+    return http_method.lower() in {
         "get",
         "head",
         "post",
@@ -24,7 +24,7 @@ def is_valid_http_method(http_method: str) -> bool:
         "connect",
         "options",
         "trace",
-    ]
+    }
 
 
 # This class defines a Metric to support your Expectation.

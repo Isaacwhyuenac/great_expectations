@@ -68,7 +68,6 @@ def parse_grep(lines: list[str]) -> list[str]:
 
     """
     example_present = False
-    only_one_closing_tag = False
     closing_tag_count = 0
     for line in lines:
         if (
@@ -79,9 +78,7 @@ def parse_grep(lines: list[str]) -> list[str]:
         if "</snippet>" in line:
             closing_tag_count += 1
 
-    if closing_tag_count == 1:
-        only_one_closing_tag = True
-
+    only_one_closing_tag = closing_tag_count == 1
     if len(lines) == 2 and example_present and only_one_closing_tag:
         return []
     else:
@@ -93,8 +90,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as tmp_dir:
         run_docusaurus_build(tmp_dir)
         grep_output = run_grep(tmp_dir)
-        parsed_grep_output = parse_grep(grep_output)
-        if parsed_grep_output:
+        if parsed_grep_output := parse_grep(grep_output):
             print("[ERROR] Found snippets in the docs build:")
             for line in parsed_grep_output:
                 print(line)

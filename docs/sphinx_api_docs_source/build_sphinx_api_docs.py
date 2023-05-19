@@ -186,15 +186,19 @@ class SphinxInvokeDocsBuilder:
         """Collect html file paths from Sphinx-generated html, skipping known index paths."""
         static_html_file_path = pathlib.Path(self.temp_sphinx_html_dir) / "html"
         paths = static_html_file_path.glob("**/*.html")
-        files = [
+        return [
             p
             for p in paths
             if p.is_file()
             and p.name
-            not in ("genindex.html", "search.html", "index.html", "py-modindex.html")
+            not in (
+                "genindex.html",
+                "search.html",
+                "index.html",
+                "py-modindex.html",
+            )
             and "_static" not in str(p)
         ]
-        return files
 
     def _parse_and_process_html_to_mdx(
         self, html_file_path: pathlib.Path, html_file_contents: str
@@ -321,9 +325,7 @@ class SphinxInvokeDocsBuilder:
             Path within the API docs folder to create the mdx file.
         """
 
-        output_path = sidebar_entry.mdx_relpath
-
-        return output_path
+        return sidebar_entry.mdx_relpath
 
     def _get_class_mdx_relative_filepath(self, definition: Definition) -> pathlib.Path:
         """Get the filepath to use for the docusaurus mdx file from a class definition."""
@@ -483,15 +485,13 @@ class SphinxInvokeDocsBuilder:
     ) -> pathlib.Path:
         """Generate markdown file name from the dotted path prefix."""
         dotted_path_prefix = self._get_dotted_path_prefix(definition=definition)
-        path = pathlib.Path(dotted_path_prefix.replace(".", "/") + ".md")
-        return path
+        return pathlib.Path(dotted_path_prefix.replace(".", "/") + ".md")
 
     def _get_dotted_path_prefix(self, definition: Definition):
         """Get the dotted path up to the class or function name."""
         path = definition.filepath
         relpath = path.relative_to(self.repo_root)
-        dotted_path_prefix = str(".".join(relpath.parts)).replace(".py", "")
-        return dotted_path_prefix
+        return ".".join(relpath.parts).replace(".py", "")
 
     def _create_class_md_stub(self, definition: Definition) -> str:
         """Create the markdown stub content for a class."""
@@ -580,9 +580,7 @@ class SphinxInvokeDocsBuilder:
             f"{import_code_block_content}"
             "\n\n"
         )
-        doc = doc_front_matter + doc
-
-        return doc
+        return doc_front_matter + doc
 
     def _clean_up_code_blocks(self, doc: str) -> str:
         """Revert escaped characters in code blocks.
@@ -596,5 +594,4 @@ class SphinxInvokeDocsBuilder:
             doc.replace("“", '"').replace("”", '"').replace("‘", "'").replace("’", "'")
         )
         doc = doc.replace("<cite>{", "`").replace("}</cite>", "`")
-        doc = doc.replace("${", r"\${")
-        return doc
+        return doc.replace("${", r"\${")

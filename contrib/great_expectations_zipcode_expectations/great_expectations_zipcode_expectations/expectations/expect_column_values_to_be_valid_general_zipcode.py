@@ -20,10 +20,7 @@ def is_zipcode_valid(zipcode: str, country_code) -> bool:
     try:
         data = pgeocode.Nominatim(country_code.upper())
         place_name = data.query_postal_code(zipcode).place_name
-        if isinstance(place_name, str):
-            return True
-        else:
-            return False
+        return isinstance(place_name, str)
     except Exception:
         return False
 

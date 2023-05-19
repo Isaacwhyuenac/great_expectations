@@ -20,8 +20,6 @@ def is_valid_date(date_in: str) -> bool:
     try:
         if isinstance(date_in, str):
             parse(date_in)
-        else:
-            pass
         return True
     except Exception:
         return False

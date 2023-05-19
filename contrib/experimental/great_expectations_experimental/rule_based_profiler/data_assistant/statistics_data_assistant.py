@@ -165,15 +165,13 @@ class StatisticsDataAssistant(DataAssistant):
             table_row_count_range_parameter_builder_for_validations,
             mean_table_columns_set_match_multi_batch_parameter_builder_for_validations,
         ]
-        rule = Rule(
+        return Rule(
             name="table_rule",
             variables=variables,
             domain_builder=table_domain_builder,
             parameter_builders=parameter_builders,
             expectation_configuration_builders=None,
         )
-
-        return rule
 
     @staticmethod
     def _build_column_integrity_rule(
@@ -271,15 +269,13 @@ class StatisticsDataAssistant(DataAssistant):
             column_values_null_mean_unexpected_value_multi_batch_parameter_builder_for_validations,
             column_values_nonnull_mean_unexpected_value_multi_batch_parameter_builder_for_validations,
         ]
-        rule = Rule(
+        return Rule(
             name="column_integrity_rule",
             variables=variables,
             domain_builder=every_column_domain_builder,
             parameter_builders=parameter_builders,
             expectation_configuration_builders=None,
         )
-
-        return rule
 
     @staticmethod
     def _build_numeric_columns_rule() -> Rule:
@@ -442,15 +438,13 @@ class StatisticsDataAssistant(DataAssistant):
             column_mean_values_range_parameter_builder_for_validations,
             column_standard_deviation_values_range_parameter_builder_for_validations,
         ]
-        rule = Rule(
+        return Rule(
             name="numeric_columns_rule",
             variables=variables,
             domain_builder=numeric_column_type_domain_builder,
             parameter_builders=parameter_builders,
             expectation_configuration_builders=None,
         )
-
-        return rule
 
     @staticmethod
     def _build_datetime_columns_rule() -> Rule:
@@ -537,15 +531,13 @@ class StatisticsDataAssistant(DataAssistant):
             column_min_values_range_parameter_builder_for_validations,
             column_max_values_range_parameter_builder_for_validations,
         ]
-        rule = Rule(
+        return Rule(
             name="datetime_columns_rule",
             variables=variables,
             domain_builder=datetime_column_type_domain_builder,
             parameter_builders=parameter_builders,
             expectation_configuration_builders=None,
         )
-
-        return rule
 
     @staticmethod
     def _build_text_columns_rule() -> Rule:
@@ -631,15 +623,13 @@ class StatisticsDataAssistant(DataAssistant):
             column_min_length_range_parameter_builder_for_validations,
             column_max_length_range_parameter_builder_for_validations,
         ]
-        rule = Rule(
+        return Rule(
             name="text_columns_rule",
             variables=variables,
             domain_builder=text_column_type_domain_builder,
             parameter_builders=parameter_builders,
             expectation_configuration_builders=None,
         )
-
-        return rule
 
     @staticmethod
     def _build_categorical_columns_rule() -> Rule:
@@ -704,12 +694,10 @@ class StatisticsDataAssistant(DataAssistant):
         parameter_builders: List[ParameterBuilder] = [
             column_unique_proportion_range_parameter_builder_for_validations,
         ]
-        rule = Rule(
+        return Rule(
             name="categorical_columns_rule",
             variables=variables,
             domain_builder=categorical_column_type_domain_builder,
             parameter_builders=parameter_builders,
             expectation_configuration_builders=None,
         )
-
-        return rule

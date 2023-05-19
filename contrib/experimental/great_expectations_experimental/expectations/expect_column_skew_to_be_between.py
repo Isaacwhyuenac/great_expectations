@@ -37,15 +37,11 @@ class ColumnSkew(ColumnAggregateMetricProvider):
 
     @column_aggregate_value(engine=PandasExecutionEngine)
     def _pandas(cls, column, abs=False, **kwargs):
-        if abs:
-            return np.abs(stats.skew(column))
-        return stats.skew(column)
+        return np.abs(stats.skew(column)) if abs else stats.skew(column)
 
     @column_aggregate_partial(engine=SparkDFExecutionEngine)
     def _spark(cls, column, abs=False, **kwargs):
-        if abs:
-            return F.abs(F.skewness(column))
-        return F.skewness(column)
+        return F.abs(F.skewness(column)) if abs else F.skewness(column)
 
     @metric_value(engine=SqlAlchemyExecutionEngine)
     def _sqlalchemy(
@@ -99,10 +95,7 @@ class ColumnSkew(ColumnAggregateMetricProvider):
         )
 
         column_skew = column_third_moment / (column_std**3) / (column_count - 1)
-        if metric_value_kwargs["abs"]:
-            return np.abs(column_skew)
-        else:
-            return column_skew
+        return np.abs(column_skew) if metric_value_kwargs["abs"] else column_skew
 
 
 def _get_query_result(func, selectable, sqlalchemy_engine):

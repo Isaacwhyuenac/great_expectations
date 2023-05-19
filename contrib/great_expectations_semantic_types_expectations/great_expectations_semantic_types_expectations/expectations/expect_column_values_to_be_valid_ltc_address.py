@@ -18,8 +18,7 @@ from great_expectations.expectations.metrics import (
 
 def is_valid_ltc_address(addr: str) -> bool:
     try:
-        res = coinaddrvalidator.validate("ltc", addr).valid
-        return res
+        return coinaddrvalidator.validate("ltc", addr).valid
     except Exception:
         return False
 

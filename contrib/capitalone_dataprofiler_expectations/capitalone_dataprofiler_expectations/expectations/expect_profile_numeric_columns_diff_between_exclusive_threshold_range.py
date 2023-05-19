@@ -72,12 +72,14 @@ class DataProfilerProfileNumericColumnsDiffBetweenThresholdRange(
                 requested_columns[col] = "Column requested was not found."
                 continue
 
-            col_data_stats = {}
-            for data_stat in data_stats:
-                if data_stat["column_name"] == col:
-                    col_data_stats = data_stat["statistics"]
-                    break
-
+            col_data_stats = next(
+                (
+                    data_stat["statistics"]
+                    for data_stat in data_stats
+                    if data_stat["column_name"] == col
+                ),
+                {},
+            )
             requested_columns[col] = {}
             for stat, bounds in stats.items():
                 if stat not in col_data_stats:
@@ -86,18 +88,17 @@ class DataProfilerProfileNumericColumnsDiffBetweenThresholdRange(
                 diff_val = col_data_stats[stat]
                 if diff_val == "unchanged":  # In the case there is no delta
                     diff_val = 0
-                between_bounds = is_value_between_bounds(
+                if between_bounds := is_value_between_bounds(
                     diff_val, bounds["lower"], bounds["upper"], inclusive=False
-                )
-                if not between_bounds:
+                ):
+                    requested_columns[col][stat] = True
+
+                else:
                     requested_columns[col][stat] = {
                         "lower_bound": bounds["lower"],
                         "upper_bound": bounds["upper"],
                         "value_found": diff_val,
                     }
-                else:
-                    requested_columns[col][stat] = True
-
         return requested_columns
 
     @classmethod

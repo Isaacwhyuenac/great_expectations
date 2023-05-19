@@ -38,7 +38,7 @@ class MulticolumnValuesSumValuesEqualToSingleColumn(MulticolumnMapMetricProvider
 
     @multicolumn_condition_partial(engine=SqlAlchemyExecutionEngine)
     def _sqlalchemy(cls, column_list, **kwargs):
-        columns_to_sum = column_list[0:-1]
+        columns_to_sum = column_list[:-1]
         sqlalchemy_columns_to_sum = columns_to_sum[0]
         if len(columns_to_sum) > 1:
             for column in columns_to_sum[1:]:

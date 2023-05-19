@@ -31,8 +31,7 @@ class ColumnValuesLinestringMilesDistanceBetween(ColumnMapMetricProvider):
         geo_ser = geopandas.GeoSeries(column, crs={"proj": "cea"})
         # access the length of the column
         col_len = geo_ser.length * 0.000621371192
-        in_between = (col_len >= min_distance) & (col_len <= max_distance)
-        return in_between
+        return (col_len >= min_distance) & (col_len <= max_distance)
 
 
 # This method defines the business logic for evaluating your metric when using a SqlAlchemyExecutionEngine

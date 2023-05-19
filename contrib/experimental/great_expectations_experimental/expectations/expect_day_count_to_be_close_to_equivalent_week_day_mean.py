@@ -82,8 +82,7 @@ class ColumnCountsPerDaysCustom(ColumnAggregateMetricProvider):
             .order_by(sa.func.Date(column).desc())
             .limit(METRIC_SAMPLE_LIMIT)
         )
-        results = sqlalchemy_engine.execute(query).fetchall()
-        return results
+        return sqlalchemy_engine.execute(query).fetchall()
 
 
 class ExpectDayCountToBeCloseToEquivalentWeekDayMean(ColumnAggregateExpectation):
@@ -250,11 +249,10 @@ class ExpectDayCountToBeCloseToEquivalentWeekDayMean(ColumnAggregateExpectation)
             days_ago_dict[i] for i in FOUR_PREVIOUS_WEEKS
         ]
 
-        assert min(equivalent_previous_days) > (
-            datetime.today() - timedelta(METRIC_SAMPLE_LIMIT)
+        assert min(equivalent_previous_days) > datetime.now() - timedelta(
+            METRIC_SAMPLE_LIMIT
         ), (
-            f"Data includes only up to {METRIC_SAMPLE_LIMIT} days prior to today ({datetime.today()}), "
-            f"but 4 weeks before the given run_date is {min(equivalent_previous_days)}",
+            f"Data includes only up to {METRIC_SAMPLE_LIMIT} days prior to today ({datetime.now()}), but 4 weeks before the given run_date is {min(equivalent_previous_days)}",
         )
 
         day_counts_dict = get_counts_per_day_as_dict(
@@ -295,7 +293,7 @@ def get_counts_per_day_as_dict(
 
     for day in all_days_list:
         if day not in day_counts_dict.keys():
-            day_counts_dict.update({day: 0})
+            day_counts_dict[day] = 0
 
     return day_counts_dict
 
@@ -324,7 +322,7 @@ def get_diff_fraction(
 
 
 def average_if_nonempty(list_: list):
-    return sum(list_) / len(list_) if len(list_) > 0 else 0
+    return sum(list_) / len(list_) if list_ else 0
 
 
 if __name__ == "__main__":

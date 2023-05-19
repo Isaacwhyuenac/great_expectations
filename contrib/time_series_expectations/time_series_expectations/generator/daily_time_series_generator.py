@@ -45,11 +45,9 @@ class DailyTimeSeriesGenerator(TimeSeriesGenerator):
         """Generate an annual seasonality component for a time series."""
 
         return sum(
-            [
-                alpha * np.cos(2 * np.pi * (i + 1) * date_range / 365)
-                + beta * np.sin(2 * np.pi * (i + 1) * date_range / 365)
-                for i, (alpha, beta) in enumerate(annual_seasonality_params)
-            ]
+            alpha * np.cos(2 * np.pi * (i + 1) * date_range / 365)
+            + beta * np.sin(2 * np.pi * (i + 1) * date_range / 365)
+            for i, (alpha, beta) in enumerate(annual_seasonality_params)
         )
 
     def _generate_posneg_pareto(
@@ -115,16 +113,8 @@ class DailyTimeSeriesGenerator(TimeSeriesGenerator):
         if trend_params is None:
             # Generate a time series with 4 trend segments
             trend_params = [
-                {
-                    "alpha": 0,
-                    "beta": 0.06,
-                    "cutpoint": int(size / 4),
-                },
-                {
-                    "alpha": 25,
-                    "beta": -0.05,
-                    "cutpoint": int(size / 2),
-                },
+                {"alpha": 0, "beta": 0.06, "cutpoint": size // 4},
+                {"alpha": 25, "beta": -0.05, "cutpoint": size // 2},
                 {
                     "alpha": 5,
                     "beta": 0.0,
@@ -139,7 +129,7 @@ class DailyTimeSeriesGenerator(TimeSeriesGenerator):
 
         if weekday_dummy_params is None:
             # Create 7 random weekday dummies
-            weekday_dummy_params = [np.random.normal() for i in range(7)]
+            weekday_dummy_params = [np.random.normal() for _ in range(7)]
 
         if annual_seasonality_params is None:
             # Create 10 random annual seasonality parameters
@@ -148,7 +138,7 @@ class DailyTimeSeriesGenerator(TimeSeriesGenerator):
                     np.random.normal(),
                     np.random.normal(),
                 )
-                for i in range(10)
+                for _ in range(10)
             ]
 
         time_series_components = self._generate_component_time_series(
@@ -161,7 +151,7 @@ class DailyTimeSeriesGenerator(TimeSeriesGenerator):
             noise_scale,
         )
 
-        Y = (
+        return (
             time_series_components["trend"]
             + time_series_components["weekly_seasonality"]
             + time_series_components["annual_seasonality"]
@@ -169,8 +159,6 @@ class DailyTimeSeriesGenerator(TimeSeriesGenerator):
             + time_series_components["outliers"]
             + time_series_components["noise"]
         )
-
-        return Y
 
     def generate_df(
         self,

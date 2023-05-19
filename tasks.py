@@ -196,10 +196,7 @@ def docstrings(ctx: Context, paths: list[str] | None = None):
         invoke docstrings -p=great_expectations/core -p=great_expectations/util.py
     """
 
-    if paths:
-        select_paths = [pathlib.Path(p) for p in paths]
-    else:
-        select_paths = None
+    select_paths = [pathlib.Path(p) for p in paths] if paths else None
     try:
         check_public_api_docstrings.main(select_paths=select_paths)
     except AssertionError as err:
@@ -269,11 +266,7 @@ def type_check(
         except FileNotFoundError as exc:
             print(f"❌\n  {exc}")
 
-    if daemon:
-        bin = "dmypy run --"
-    else:
-        bin = "mypy"
-
+    bin = "dmypy run --" if daemon else "mypy"
     ge_pkgs = [f"great_expectations.{p}" for p in packages]
 
     if check_stub_sources:
@@ -381,8 +374,6 @@ def tests(
         unit = False
     markers += ["unit" if unit else "not unit"]
 
-    marker_text = " and ".join(markers)
-
     cov_param = "--cov=great_expectations"
     if package and not full_cov:
         cov_param += f"/{package.replace('.', '/')}"
@@ -395,6 +386,8 @@ def tests(
         "-vv",
     ]
     if not ignore_markers:
+        marker_text = " and ".join(markers)
+
         cmds += ["-m", f"'{marker_text}'"]
     if unit and not ignore_markers:
         try:
@@ -587,8 +580,8 @@ def _exit_with_error_if_not_in_repo_root(task_name: str):
         os.path.dirname(os.path.realpath(__file__))  # noqa: PTH120
     )
     curdir = os.path.realpath(os.getcwd())  # noqa: PTH109
-    exit_message = f"The {task_name} task must be invoked from the same directory as the tasks.py file at the top of the repo."
     if filedir != curdir:
+        exit_message = f"The {task_name} task must be invoked from the same directory as the tasks.py file at the top of the repo."
         raise invoke.Exit(
             exit_message,
             code=1,
@@ -654,20 +647,15 @@ def docs(
         ctx.run(" ".join(rm_rf_cmds), echo=True)
     elif lint:
         ctx.run(" ".join(["yarn lint"]), echo=True)
+    elif start:
+        ctx.run(" ".join(["yarn start"]), echo=True)
     else:
-        if start:
-            ctx.run(" ".join(["yarn start"]), echo=True)
-        else:
-            print("Making sure docusaurus dependencies are installed.")
-            ctx.run(" ".join(["yarn install"]), echo=True)
+        print("Making sure docusaurus dependencies are installed.")
+        ctx.run(" ".join(["yarn install"]), echo=True)
 
-            if build:
-                build_docs_cmd = "../build_docs"
-            else:
-                build_docs_cmd = "../build_docs_locally.sh"
-
-            print(f"Running {build_docs_cmd} from:", docusaurus_dir)
-            ctx.run(build_docs_cmd, echo=True)
+        build_docs_cmd = "../build_docs" if build else "../build_docs_locally.sh"
+        print(f"Running {build_docs_cmd} from:", docusaurus_dir)
+        ctx.run(build_docs_cmd, echo=True)
 
     os.chdir(old_pwd)
 
@@ -704,8 +692,8 @@ def _exit_with_error_if_not_run_from_correct_dir(
     if not correct_dir:
         correct_dir = pathlib.Path(__file__).parent
     curdir = pathlib.Path.cwd()
-    exit_message = f"The {task_name} task must be invoked from the same directory as the tasks.py file."
     if correct_dir != curdir:
+        exit_message = f"The {task_name} task must be invoked from the same directory as the tasks.py file."
         raise invoke.Exit(
             exit_message,
             code=1,

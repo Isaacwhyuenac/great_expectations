@@ -56,14 +56,14 @@ class MetaFileDataAsset(DataAsset):
         @cls.expectation(argspec)
         @wraps(func)
         def inner_wrapper(
-            self,
-            skip=None,
-            mostly=None,
-            null_lines_regex=r"^\s*$",
-            result_format=None,
-            *args,
-            **kwargs
-        ):
+                self,
+                skip=None,
+                mostly=None,
+                null_lines_regex=r"^\s*$",
+                result_format=None,
+                *args,
+                **kwargs
+            ):
             try:
                 f = open(self._path)
             except OSError:
@@ -96,7 +96,7 @@ class MetaFileDataAsset(DataAsset):
                     )
                 else:
                     boolean_mapped_null_lines = np.zeros(len(lines), dtype=bool)
-                element_count = int(len(lines))
+                element_count = len(lines)
                 if element_count > sum(boolean_mapped_null_lines):
                     nonnull_lines = list(
                         compress(lines, np.invert(boolean_mapped_null_lines))
@@ -275,24 +275,24 @@ class FileDataAsset(MetaFileDataAsset):
                 )
 
         if expected_max_count is not None and expected_min_count is not None:
-            truth_list = [
+            return [
                 expected_min_count
                 <= len(comp_regex.findall(line))
                 <= expected_max_count
                 for line in _lines
             ]
         elif expected_max_count is not None:
-            truth_list = [
-                len(comp_regex.findall(line)) <= expected_max_count for line in _lines
+            return [
+                len(comp_regex.findall(line)) <= expected_max_count
+                for line in _lines
             ]
         elif expected_min_count is not None:
-            truth_list = [
-                len(comp_regex.findall(line)) >= expected_min_count for line in _lines
+            return [
+                len(comp_regex.findall(line)) >= expected_min_count
+                for line in _lines
             ]
         else:
-            truth_list = [True for _ in _lines]
-
-        return truth_list
+            return [True for _ in _lines]
 
     @MetaFileDataAsset.file_lines_map_expectation
     def expect_file_line_regex_match_count_to_equal(
@@ -421,10 +421,8 @@ class FileDataAsset(MetaFileDataAsset):
             BLOCK_SIZE = 65536
             try:
                 with open(self._path, "rb") as file:
-                    file_buffer = file.read(BLOCK_SIZE)
-                    while file_buffer:
+                    while file_buffer := file.read(BLOCK_SIZE):
                         hash.update(file_buffer)
-                        file_buffer = file.read(BLOCK_SIZE)
                     success = hash.hexdigest() == value
             except OSError:
                 raise
@@ -485,10 +483,11 @@ class FileDataAsset(MetaFileDataAsset):
                 raise ValueError("minsize must be an integer")
             minsize = int(float(minsize))
 
-            if maxsize is not None and not float(maxsize).is_integer():
-                raise ValueError("maxsize must be an integer")
-            elif maxsize is not None:
-                maxsize = int(float(maxsize))
+            if maxsize is not None:
+                if not float(maxsize).is_integer():
+                    raise ValueError("maxsize must be an integer")
+                else:
+                    maxsize = int(float(maxsize))
         except TypeError:
             raise
 
@@ -501,13 +500,12 @@ class FileDataAsset(MetaFileDataAsset):
         if maxsize is not None and minsize > maxsize:
             raise ValueError("maxsize must be greater than or equal to minsize")
 
-        if maxsize is None and size >= minsize:
-            success = True
-        elif (size >= minsize) and (size <= maxsize):
-            success = True
-        else:
-            success = False
-
+        success = (
+            maxsize is None
+            and size >= minsize
+            or size >= minsize
+            and size <= maxsize
+        )
         return {"success": success, "result": {"observed_value": size}}
 
     @DataAsset.expectation(["filepath"])
@@ -615,8 +613,6 @@ class FileDataAsset(MetaFileDataAsset):
         except re.error:
             raise ValueError("Must enter valid regular expression for regex")
 
-        success = False
-
         try:
             with open(self._path) as f:
                 lines = f.readlines()  # Read in file lines
@@ -636,9 +632,7 @@ class FileDataAsset(MetaFileDataAsset):
 
         header_line = lines[0].strip()
         header_names = comp_regex.split(header_line)
-        if len(set(header_names)) == len(header_names):
-            success = True
-
+        success = len(set(header_names)) == len(header_names)
         return {"success": success}
 
     @DataAsset.expectation([])

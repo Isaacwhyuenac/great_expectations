@@ -34,9 +34,7 @@ class ColumnPairValuesMatchProphetModel(ColumnPairMapMetricProvider):
     def _pandas(cls, column_A, column_B, model_json, **kwargs):
         model = ProphetModelDeserializer().get_model(model_json)
         forecast = model.predict(pd.DataFrame({"ds": column_A}))
-        in_bounds = (forecast.yhat_lower < column_B) & (column_B < forecast.yhat_upper)
-
-        return in_bounds
+        return (forecast.yhat_lower < column_B) & (column_B < forecast.yhat_upper)
 
     # @column_pair_condition_partial(engine=SqlAlchemyExecutionEngine)
     # def _sqlalchemy(cls, column_A, column_B, _dialect, **kwargs):

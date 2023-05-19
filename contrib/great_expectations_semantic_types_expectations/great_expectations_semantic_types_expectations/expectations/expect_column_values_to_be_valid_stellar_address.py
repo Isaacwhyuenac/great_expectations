@@ -18,8 +18,7 @@ from great_expectations.expectations.metrics import (
 
 def is_valid_stellar_address(addr: str) -> bool:
     try:
-        res = coinaddrvalidator.validate("xlm", addr).valid
-        return res
+        return coinaddrvalidator.validate("xlm", addr).valid
     except Exception:
         return False
 

@@ -38,8 +38,7 @@ def run_grep(target_dir: pathlib.Path) -> List[str]:
 def main() -> None:
     check_dependencies("grep")
     docs_dir = pathlib.Path(__file__).parent.parent / "docs"
-    grep_output = run_grep(docs_dir)
-    if grep_output:
+    if grep_output := run_grep(docs_dir):
         print(
             f"[ERROR] Found {len(grep_output)} snippets using file and line number syntax, please use named snippet syntax:"
         )

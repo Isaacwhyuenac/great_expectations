@@ -83,29 +83,29 @@ def do_config_check(
 
         context = FileDataContext(context_root_dir=target_directory)
         ge_config_version: int = context.get_config().config_version  # type: ignore[union-attr] # could be dict, str
-        if int(ge_config_version) < CURRENT_GX_CONFIG_VERSION:
+        if ge_config_version < CURRENT_GX_CONFIG_VERSION:
             is_config_ok = False
             upgrade_message = f"""The config_version of your great_expectations.yml -- {float(ge_config_version)} -- is outdated.
 Please consult the V3 API migration guide https://docs.greatexpectations.io/docs/guides/miscellaneous/migration_guide#migrating-to-the-batch-request-v3-api and
 upgrade your Great Expectations configuration to version {float(CURRENT_GX_CONFIG_VERSION)} in order to take advantage of the latest capabilities.
 """
             context = None
-        elif int(ge_config_version) > CURRENT_GX_CONFIG_VERSION:
+        elif ge_config_version > CURRENT_GX_CONFIG_VERSION:
             raise gx_exceptions.UnsupportedConfigVersionError(
                 f"""Invalid config version ({ge_config_version}).\n    The maximum valid version is \
 {CURRENT_GX_CONFIG_VERSION}.
 """
             )
         else:
-            upgrade_helper_class = GE_UPGRADE_HELPER_VERSION_MAP.get(
-                int(ge_config_version)
-            )
-            if upgrade_helper_class:
+            if upgrade_helper_class := GE_UPGRADE_HELPER_VERSION_MAP.get(
+                ge_config_version
+            ):
                 upgrade_helper = upgrade_helper_class(
                     data_context=context, update_version=False
                 )
-                manual_steps_required = upgrade_helper.manual_steps_required()
-                if manual_steps_required:
+                if (
+                    manual_steps_required := upgrade_helper.manual_steps_required()
+                ):
                     (
                         upgrade_overview,
                         confirmation_required,

@@ -250,21 +250,21 @@ class CheckpointResult(SerializableDictDot):
 
     def _list_validation_results_by_data_asset_name(self) -> dict:
         if self._validation_results_by_data_asset_name is None:
-            validation_results_by_data_asset_name = {}
-            for data_asset_name in self.list_data_asset_names():
-                if data_asset_name == "__none__":
-                    validation_results_by_data_asset_name[data_asset_name] = [
-                        data_asset["validation_results"]
-                        for data_asset in self.list_data_assets_validated()
-                        if data_asset["batch_definition"].data_asset_name is None
-                    ]
-                else:
-                    validation_results_by_data_asset_name[data_asset_name] = [
-                        data_asset["validation_results"]
-                        for data_asset in self.list_data_assets_validated()
-                        if data_asset["batch_definition"].data_asset_name
-                        == data_asset_name
-                    ]
+            validation_results_by_data_asset_name = {
+                data_asset_name: [
+                    data_asset["validation_results"]
+                    for data_asset in self.list_data_assets_validated()
+                    if data_asset["batch_definition"].data_asset_name is None
+                ]
+                if data_asset_name == "__none__"
+                else [
+                    data_asset["validation_results"]
+                    for data_asset in self.list_data_assets_validated()
+                    if data_asset["batch_definition"].data_asset_name
+                    == data_asset_name
+                ]
+                for data_asset_name in self.list_data_asset_names()
+            }
             self._validation_results_by_data_asset_name = (
                 validation_results_by_data_asset_name
             )

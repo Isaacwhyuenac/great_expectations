@@ -200,7 +200,7 @@ class ExpectColumnValuesToNotBeNullAndColumnToNotBeEmpty(ColumnMapExpectation):
     ):
         runtime_configuration = runtime_configuration or {}
         include_column_name = (
-            False if runtime_configuration.get("include_column_name") is False else True
+            runtime_configuration.get("include_column_name") is not False
         )
         styling = runtime_configuration.get("styling")
         params = substitute_none_for_missing(
@@ -213,17 +213,15 @@ class ExpectColumnValuesToNotBeNullAndColumnToNotBeEmpty(ColumnMapExpectation):
                 params["mostly"] * 100, precision=15, no_scientific=True
             )
             # params["mostly_pct"] = "{:.14f}".format(params["mostly"]*100).rstrip("0").rstrip(".")
-            if include_column_name:
-                template_str = "$column values must not be null, at least $mostly_pct % of the time."
-            else:
-                template_str = (
-                    "values must not be null, at least $mostly_pct % of the time."
-                )
+            template_str = (
+                "$column values must not be null, at least $mostly_pct % of the time."
+                if include_column_name
+                else "values must not be null, at least $mostly_pct % of the time."
+            )
+        elif include_column_name:
+            template_str = "$column values must never be null."
         else:
-            if include_column_name:
-                template_str = "$column values must never be null."
-            else:
-                template_str = "values must never be null."
+            template_str = "values must never be null."
 
         if params["row_condition"] is not None:
             (

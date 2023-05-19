@@ -29,8 +29,8 @@ class BaseProfiler:
     """
 
     # noinspection PyMethodMayBeStatic,PyMethodParameters
-    def load(cls, filepath: str) -> BaseProfiler:
-        return cls
+    def load(self, filepath: str) -> BaseProfiler:
+        return self
 
     # noinspection PyMethodMayBeStatic
     def report(self, report_options: dict = None) -> dict:

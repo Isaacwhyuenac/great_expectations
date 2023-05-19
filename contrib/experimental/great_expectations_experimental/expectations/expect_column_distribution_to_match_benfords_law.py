@@ -23,17 +23,13 @@ def sig_exp(num):
     digits = parts[0].lstrip("0") + decimal
     trimmed = digits.rstrip("0")
     exp += len(digits) - len(trimmed)
-    sig = int(trimmed) if trimmed else 0
-    return sig
+    return int(trimmed) if trimmed else 0
 
 
 # 1 for true, 0 for false
 def matchFirstDigit(value, digit):
     significand_string = str(sig_exp(value))
-    if int(significand_string[0]) == digit:
-        return 1.0
-    else:
-        return 0.0
+    return 1.0 if int(significand_string[0]) == digit else 0.0
 
 
 class ColumnDistributionMatchesBenfordsLaw(ColumnAggregateMetricProvider):
@@ -89,23 +85,17 @@ class ColumnDistributionMatchesBenfordsLaw(ColumnAggregateMetricProvider):
             num9 / totalVals,
         ]
 
-        matchvalues = []
-        for x in range(1, 10):
-            matchvalues.append(math.log(1.0 + 1.0 / x) / math.log(10))
-
+        matchvalues = [math.log(1.0 + 1.0 / x) / math.log(10) for x in range(1, 10)]
         """
         listdata: length 10
         matchvalues: length 10
         chi square them with 90 percent confidence
         """
-        stat = 0
-        for i in range(9):
-            stat += ((listdata[i] - matchvalues[i]) ** 2) / (matchvalues[i])
-
-        if stat >= 5.071:
-            return False
-        else:
-            return True
+        stat = sum(
+            ((listdata[i] - matchvalues[i]) ** 2) / (matchvalues[i])
+            for i in range(9)
+        )
+        return stat < 5.071
 
     # @metric_value(engine=SqlAlchemyExecutionEngine)
     # def _sqlalchemy(

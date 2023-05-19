@@ -28,10 +28,7 @@ def gather_all_contrib_package_paths() -> List[str]:
     """
     package_paths: List[str] = []
     for root, _, files in os.walk("contrib/"):
-        for file in files:
-            if file == "package_info.yml":
-                package_paths.append(root)
-
+        package_paths.extend(root for file in files if file == "package_info.yml")
     logger.info(f"Found {len(package_paths)} contrib packages")
     return package_paths
 

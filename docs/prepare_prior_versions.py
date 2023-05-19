@@ -40,26 +40,30 @@ def change_paths_for_docs_file_references(verbose: bool = False) -> None:
 
 def _paths_to_versioned_docs() -> list[pathlib.Path]:
     data_path = _docs_dir() / "docusaurus/versioned_docs"
-    paths = [f for f in data_path.iterdir() if f.is_dir()]
-    return paths
+    return [f for f in data_path.iterdir() if f.is_dir()]
 
 
 def _paths_to_versioned_docs_after_v0_14_13() -> list[pathlib.Path]:
     data_path = _docs_dir() / "docusaurus/versioned_docs"
-    paths = [f for f in data_path.iterdir() if f.is_dir() and "0.14.13" not in str(f)]
-    return paths
+    return [
+        f
+        for f in data_path.iterdir()
+        if f.is_dir() and "0.14.13" not in str(f)
+    ]
 
 
 def _paths_to_versioned_code() -> list[pathlib.Path]:
     data_path = _docs_dir() / "docusaurus/versioned_code"
-    paths = [f for f in data_path.iterdir() if f.is_dir()]
-    return paths
+    return [f for f in data_path.iterdir() if f.is_dir()]
 
 
 def _paths_to_versioned_code_after_v0_14_13() -> list[pathlib.Path]:
     data_path = _docs_dir() / "docusaurus/versioned_code"
-    paths = [f for f in data_path.iterdir() if f.is_dir() and "0.14.13" not in str(f)]
-    return paths
+    return [
+        f
+        for f in data_path.iterdir()
+        if f.is_dir() and "0.14.13" not in str(f)
+    ]
 
 
 def prepend_version_info_to_name_for_snippet_by_name_references(
@@ -115,7 +119,7 @@ def prepend_version_info_to_name_for_href_absolute_links(verbose: bool = False) 
     )
     for path in paths:
         version = path.name
-        version_only = version_from_path_name_pattern.search(version).group("version")
+        version_only = version_from_path_name_pattern.search(version)["version"]
         if not version_only:
             raise ValueError("Path does not contain a version number")
 

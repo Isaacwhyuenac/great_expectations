@@ -182,11 +182,11 @@ class EvaluationParameterParser:
         elif op in self.fn:
             # note: args are pushed onto the stack in reverse order
             if has_fn_kwargs:
-                kwargs = dict()
+                kwargs = {}
                 for _ in range(num_args):
                     v = self.evaluate_stack(s)
                     k = s.pop()
-                    kwargs.update({k: v})
+                    kwargs[k] = v
                 return self.fn[op](**kwargs)
             else:
                 args = reversed([self.evaluate_stack(s) for _ in range(num_args)])
@@ -367,19 +367,19 @@ def parse_evaluation_parameter(  # noqa: C901 - complexity 19
         try:
             res = ge_urn.parseString(parse_results[0])
             if res["urn_type"] == "stores":
-                store = data_context.stores.get(res["store_name"])  # type: ignore[union-attr]
-                if store:
-                    return store.get_query_result(
+                return (
+                    store.get_query_result(
                         res["metric_name"], res.get("metric_kwargs", {})
                     )
-                return None
-            else:
-                logger.error(
-                    "Unrecognized urn_type in ge_urn: must be 'stores' to use a metric store."
+                    if (store := data_context.stores.get(res["store_name"]))
+                    else None
                 )
-                raise EvaluationParameterError(
-                    f"No value found for $PARAMETER {str(parse_results[0])}"
-                )
+            logger.error(
+                "Unrecognized urn_type in ge_urn: must be 'stores' to use a metric store."
+            )
+            raise EvaluationParameterError(
+                f"No value found for $PARAMETER {str(parse_results[0])}"
+            )
         except ParseException as e:
             logger.debug(
                 f"Parse exception while parsing evaluation parameter: {str(e)}"
@@ -404,29 +404,24 @@ def parse_evaluation_parameter(  # noqa: C901 - complexity 19
         # we have a stack to evaluate and there was no parse failure.
         # iterate through values and look for URNs pointing to a store:
         for i, ob in enumerate(EXPR.exprStack):
-            if isinstance(ob, str) and ob in evaluation_parameters:
-                EXPR.exprStack[i] = str(evaluation_parameters[ob])
-            elif isinstance(ob, str) and ob not in evaluation_parameters:
-                # try to retrieve this value from a store
-                try:
-                    res = ge_urn.parseString(ob)
-                    if res["urn_type"] == "stores":
-                        store = data_context.stores.get(res["store_name"])  # type: ignore[union-attr]
-                        if store:
-                            EXPR.exprStack[i] = str(
-                                store.get_query_result(
-                                    res["metric_name"], res.get("metric_kwargs", {})
-                                )
-                            )  # value placed back in stack must be a string
-                    else:
-                        # handle other urn_types here, but note that validations URNs are being resolved elsewhere.
+            if isinstance(ob, str):
+                if ob in evaluation_parameters:
+                    EXPR.exprStack[i] = str(evaluation_parameters[ob])
+                else:
+                                    # try to retrieve this value from a store
+                    try:
+                        res = ge_urn.parseString(ob)
+                        if res["urn_type"] == "stores":
+                            if store := data_context.stores.get(
+                                res["store_name"]
+                            ):
+                                EXPR.exprStack[i] = str(
+                                    store.get_query_result(
+                                        res["metric_name"], res.get("metric_kwargs", {})
+                                    )
+                                )  # value placed back in stack must be a string
+                    except (ParseException, AttributeError):
                         pass
-                # graceful error handling for cases where the value in the stack isn't a URN:
-                except ParseException:
-                    pass
-                except AttributeError:
-                    pass
-
     else:
         err_str, err_line, err_col = parse_results[-1]
         raise EvaluationParameterError(
@@ -491,12 +486,15 @@ def _deduplicate_evaluation_parameter_dependencies(dependencies: dict) -> dict:
                     for metric_name in metric_list:
                         metric_kwargs[kwargs_id].add(metric_name)
         deduplicated[suite_name] = list(metrics)
-        if len(metric_kwargs) > 0:
-            deduplicated[suite_name] = deduplicated[suite_name] + [
+        if metric_kwargs:
+            deduplicated[suite_name] += [
                 {
                     "metric_kwargs_id": {
                         metric_kwargs: list(metrics_set)
-                        for (metric_kwargs, metrics_set) in metric_kwargs.items()
+                        for (
+                            metric_kwargs,
+                            metrics_set,
+                        ) in metric_kwargs.items()
                     }
                 }
             ]

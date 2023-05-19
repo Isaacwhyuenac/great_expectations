@@ -77,12 +77,14 @@ class DataProfilerProfileNumericColumnsPercentDiffGreaterThanThreshold(
                 requested_columns[col] = "Column requested was not found."
                 continue
 
-            col_data_stats = {}
-            for data_stat in data_stats:
-                if data_stat["column_name"] == col:
-                    col_data_stats = data_stat["statistics"]
-                    break
-
+            col_data_stats = next(
+                (
+                    data_stat["statistics"]
+                    for data_stat in data_stats
+                    if data_stat["column_name"] == col
+                ),
+                {},
+            )
             requested_columns[col] = {}
             unavailable_stats[col] = {}
             for stat, threshold in stats.items():
@@ -90,23 +92,21 @@ class DataProfilerProfileNumericColumnsPercentDiffGreaterThanThreshold(
                     requested_columns[col][stat] = "Statistic requested was not found."
                     continue
                 diff_val = col_data_stats[stat]
-                if (
-                    diff_val == "ERR_divide_by_zero"
-                    or diff_val == "ERR_no_original_value"
-                ):
+                if diff_val in ["ERR_divide_by_zero", "ERR_no_original_value"]:
                     unavailable_stats[col][stat] = diff_val
                     continue
                 if diff_val == "unchanged":  # In the case there is no delta
                     diff_val = 0
-                above_threshold = is_value_greater_than_threshold(diff_val, threshold)
-                if not above_threshold:
+                if above_threshold := is_value_greater_than_threshold(
+                    diff_val, threshold
+                ):
+                    requested_columns[col][stat] = True
+
+                else:
                     requested_columns[col][stat] = {
                         "threshold": threshold,
                         "value_found": diff_val,
                     }
-                else:
-                    requested_columns[col][stat] = True
-
         for column in list(unavailable_stats.keys()):
             if unavailable_stats[column] == {}:
                 unavailable_stats.pop(column, None)
@@ -125,16 +125,16 @@ class DataProfilerProfileNumericColumnsPercentDiffGreaterThanThreshold(
                         current_col.pop(stat, None)
                 limit_check_report_keys_copy[column] = current_col
             warning = "\nWARNING:\n"
-            if len(div_by_zero_stats) > 0:
+            if div_by_zero_stats:
                 warning += "Div By Zero ERROR:\nValue in profile report was 0 for the following column: stat\n"
                 for div_by_zero_stat in div_by_zero_stats:
                     warning += "   " + div_by_zero_stat + "\n"
-            if len(no_original_value) > 0:
+            if no_original_value:
                 warning += "Value not Found ERROR:\nStatistic was not found in profile report for the following column: stat\n"
                 for no_original_value_string in no_original_value:
                     warning += "   " + no_original_value_string + "\n"
             warning += "\nTo avoid these errors, you should use the replace 'limit_check_report_keys' with the following:\n"
-            warning += r"" + json.dumps(limit_check_report_keys_copy, indent=2)
+            warning += f"{json.dumps(limit_check_report_keys_copy, indent=2)}"
             warning += "\n"
             warnings.warn(warning)
         return requested_columns

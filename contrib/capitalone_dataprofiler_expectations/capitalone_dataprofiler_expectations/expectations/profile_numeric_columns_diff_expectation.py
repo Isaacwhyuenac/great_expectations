@@ -84,11 +84,10 @@ class ProfileNumericColumnsDiffExpectation(BatchExpectation):
 
         success = percent_successful >= mostly
 
-        results = {
+        return {
             "success": success,
             "expectation_config": configuration,
             "result": {
                 "unexpected_values": unexpected_values,
             },
         }
-        return results

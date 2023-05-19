@@ -14,11 +14,10 @@ from great_expectations.expectations.metrics import (
 def is_valid_zip9(zip: str):
     if len(zip) != 10:
         return False
-    else:
-        try:
-            return zipcodes.is_real(zip)
-        except Exception:
-            return False
+    try:
+        return zipcodes.is_real(zip)
+    except Exception:
+        return False
 
 
 # This class defines a Metric to support your Expectation.

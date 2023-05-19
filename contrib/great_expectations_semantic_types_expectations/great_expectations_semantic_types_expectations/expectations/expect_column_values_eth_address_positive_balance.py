@@ -20,14 +20,10 @@ from great_expectations.expectations.metrics import (
 def has_eth_address_positive_balance(addr: str) -> bool:
     try:
         res = coinaddrvalidator.validate("eth", addr).valid
-        if res is True:
-            balance = blockcypher.get_total_balance(addr, "eth")
-            if balance > 0:
-                return True
-            else:
-                return False
-        else:
+        if res is not True:
             return False
+        balance = blockcypher.get_total_balance(addr, "eth")
+        return balance > 0
     except Exception:
         return False
 

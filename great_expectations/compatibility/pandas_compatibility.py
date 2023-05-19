@@ -57,33 +57,30 @@ def execute_pandas_to_datetime(
             origin=origin,
             cache=cache,
         )
-    else:
-        # pandas is 2.0.0 or greater
-        if format is None:
-            format = "mixed"
-            # format = `mixed` or `ISO8601` cannot be used in combination with `exact` parameter.
-            # infer_datetime_format is deprecated as of 2.0.0
-            return pd.to_datetime(
-                arg=arg,
-                errors=errors,
-                dayfirst=dayfirst,
-                yearfirst=yearfirst,
-                utc=utc,
-                format=format,
-                unit=unit,
-                origin=origin,
-                cache=cache,
-            )
-        else:
-            return pd.to_datetime(
-                arg=arg,
-                errors=errors,
-                dayfirst=dayfirst,
-                yearfirst=yearfirst,
-                utc=utc,
-                format=format,
-                exact=exact,
-                unit=unit,
-                origin=origin,
-                cache=cache,
-            )
+    if format is not None:
+        return pd.to_datetime(
+            arg=arg,
+            errors=errors,
+            dayfirst=dayfirst,
+            yearfirst=yearfirst,
+            utc=utc,
+            format=format,
+            exact=exact,
+            unit=unit,
+            origin=origin,
+            cache=cache,
+        )
+    format = "mixed"
+    # format = `mixed` or `ISO8601` cannot be used in combination with `exact` parameter.
+    # infer_datetime_format is deprecated as of 2.0.0
+    return pd.to_datetime(
+        arg=arg,
+        errors=errors,
+        dayfirst=dayfirst,
+        yearfirst=yearfirst,
+        utc=utc,
+        format=format,
+        unit=unit,
+        origin=origin,
+        cache=cache,
+    )

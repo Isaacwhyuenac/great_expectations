@@ -66,8 +66,7 @@ def parse_ruff_errors(raw_errors: List[str]) -> List[DocstringError]:
             line_number = int(split_error[1])
             error_code_and_error = split_error[3].strip()
 
-            error_code_match = re.search(pattern, error_code_and_error)
-            if error_code_match:
+            if error_code_match := re.search(pattern, error_code_and_error):
                 error_code = error_code_match.group()
             else:
                 error_code = ""
@@ -89,8 +88,7 @@ def parse_ruff_errors(raw_errors: List[str]) -> List[DocstringError]:
 
 
 def _repo_root() -> pathlib.Path:
-    repo_root_path = pathlib.Path(__file__).parents[2]
-    return repo_root_path
+    return pathlib.Path(__file__).parents[2]
 
 
 def _repo_relative_filepath(filepath: pathlib.Path) -> pathlib.Path:
@@ -113,9 +111,7 @@ def run_ruff(paths: List[pathlib.Path]) -> List[str]:
         text=True,
     )
 
-    # Check to make sure `ruff` actually ran
-    err: str = raw_results.stderr
-    if err:
+    if err := raw_results.stderr:
         raise ValueError(err)
 
     _log_with_timestamp("Finished running ruff")
@@ -141,8 +137,7 @@ def _get_docstring_errors(
         ]
 
     ruff_raw_errors = run_ruff(paths=filepaths_containing_public_api_entities)
-    parsed_ruff_errors = parse_ruff_errors(ruff_raw_errors)
-    return parsed_ruff_errors
+    return parse_ruff_errors(ruff_raw_errors)
 
 
 def get_public_api_definitions() -> Set[Definition]:

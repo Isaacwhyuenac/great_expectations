@@ -984,12 +984,8 @@ def _get_block_batch_request(
                 'your code. Falling back on provided "batch_identifiers".'
             )
             batch_filter_parameters = batch_identifiers
-        elif batch_filter_parameters is None and batch_identifiers is None:
+        elif batch_filter_parameters is None:
             batch_filter_parameters = kwargs
-        else:
-            # Raise a warning if kwargs exist
-            pass
-
         data_connector_query_params: dict = {
             "batch_filter_parameters": batch_filter_parameters,
             "limit": limit,
@@ -1009,14 +1005,14 @@ def _get_block_batch_request(
             }
             if sampling_kwargs is not None:
                 sampling_params["sampling_kwargs"] = sampling_kwargs
-            batch_spec_passthrough.update(sampling_params)
+            batch_spec_passthrough |= sampling_params
         if splitter_method is not None:
             splitter_params: dict = {
                 "splitter_method": splitter_method,
             }
             if splitter_kwargs is not None:
                 splitter_params["splitter_kwargs"] = splitter_kwargs
-            batch_spec_passthrough.update(splitter_params)
+            batch_spec_passthrough |= splitter_params
 
     batch_request_as_dict: dict = {
         "datasource_name": datasource_name,
@@ -1078,10 +1074,6 @@ def _get_runtime_batch_request(
 
         if batch_identifiers is None:
             batch_identifiers = kwargs
-        else:
-            # TODO: Raise a warning if kwargs exist
-            pass
-
         RuntimeBatchRequest._validate_runtime_batch_request_specific_init_parameters(
             runtime_parameters=runtime_parameters,
             batch_identifiers=batch_identifiers,
@@ -1290,7 +1282,7 @@ def standardize_batch_request_display_ordering(
             "batch_identifiers": batch_identifiers,
             **batch_request_as_dict,
         }
-    elif runtime_parameters is not None and batch_identifiers is None:
+    elif runtime_parameters is not None:
         batch_request_as_dict = {
             "datasource_name": datasource_name,
             "data_connector_name": data_connector_name,
@@ -1298,7 +1290,7 @@ def standardize_batch_request_display_ordering(
             "runtime_parameters": runtime_parameters,
             **batch_request_as_dict,
         }
-    elif runtime_parameters is None and batch_identifiers is not None:
+    elif batch_identifiers is not None:
         batch_request_as_dict = {
             "datasource_name": datasource_name,
             "data_connector_name": data_connector_name,
